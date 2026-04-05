@@ -19,6 +19,7 @@ DIST_DIR = REPO_ROOT / "dist"
 OG_DIRNAME = "og"
 DEFAULT_SITE_URL = "https://harness-books.agentway.dev"
 DEFAULT_CUSTOM_DOMAIN = "harness-books.agentway.dev"
+DEFAULT_REPOSITORY_URL = "https://github.com/wquguru/harness-books"
 BOOK_SWITCHER_CSS = """
 <style>
 :root {
@@ -317,14 +318,6 @@ BOOK_SWITCHER_CSS = """
 
   .book.with-site-switcher.with-summary .book-summary {
     left: 0;
-  }
-
-  .book.with-site-switcher.with-summary .book-body {
-    -webkit-transform: translateX(var(--hb-summary-width));
-    -moz-transform: translateX(var(--hb-summary-width));
-    -ms-transform: translateX(var(--hb-summary-width));
-    -o-transform: translateX(var(--hb-summary-width));
-    transform: translateX(var(--hb-summary-width));
   }
 }
 
@@ -874,6 +867,11 @@ def parse_args() -> argparse.Namespace:
         default=os.environ.get("CUSTOM_DOMAIN", DEFAULT_CUSTOM_DOMAIN).strip(),
         help="Custom domain written to dist/CNAME for GitHub Pages.",
     )
+    parser.add_argument(
+        "--repository-url",
+        default=os.environ.get("REPOSITORY_URL", DEFAULT_REPOSITORY_URL).strip(),
+        help="Repository URL shown in the per-book site switcher.",
+    )
     return parser.parse_args()
 
 
@@ -1052,7 +1050,11 @@ def copy_book_output(book_dir: Path, target_dir: Path) -> None:
         shutil.copytree(exported_dir, target_exported)
 
 
-def build_switcher_markup(current_slug: str, books: list[dict[str, str]]) -> str:
+def build_switcher_markup(
+    current_slug: str,
+    books: list[dict[str, str]],
+    repository_url: str,
+) -> str:
     link_parts = [
         '<a class="hb-site-switcher__link" href="../index.html">首页</a>'
     ]
@@ -1070,6 +1072,10 @@ def build_switcher_markup(current_slug: str, books: list[dict[str, str]]) -> str
             f'<a class="hb-site-switcher__link" href="../{escape(current_slug)}/{escape(current_book["pdf_path"])}" download>'
             "下载 PDF</a>"
         )
+    if repository_url:
+        link_parts.append(
+            f'<a class="hb-site-switcher__link" href="{escape(repository_url)}" target="_blank" rel="noopener noreferrer">GitHub</a>'
+        )
 
     links_html = "".join(link_parts)
     return (
@@ -1083,8 +1089,13 @@ def build_switcher_markup(current_slug: str, books: list[dict[str, str]]) -> str
     )
 
 
-def inject_switcher(book_publish_dir: Path, current_slug: str, books: list[dict[str, str]]) -> None:
-    switcher_markup = build_switcher_markup(current_slug, books)
+def inject_switcher(
+    book_publish_dir: Path,
+    current_slug: str,
+    books: list[dict[str, str]],
+    repository_url: str,
+) -> None:
+    switcher_markup = build_switcher_markup(current_slug, books, repository_url)
     for html_path in book_publish_dir.rglob("*.html"):
         if "gitbook" in html_path.parts:
             continue
@@ -1348,7 +1359,7 @@ def inject_book_social_meta(
         html_path.write_text(html, encoding="utf-8")
 
 
-def make_index_html(books: list[dict[str, str]]) -> str:
+def make_index_html(books: list[dict[str, str]], repository_url: str) -> str:
     cards = []
     for index, book in enumerate(books, start=1):
         facts_html = "".join(
@@ -1404,6 +1415,9 @@ def make_index_html(books: list[dict[str, str]]) -> str:
     <section class="hero">
       <p class="hero__eyebrow">Claude Code 和 Codex 的源码和设计哲学</p>
       <h1>全网最值得读的Harness工程实践系列书籍（共两本）</h1>
+      <div class="seo-block__actions">
+        <a class="button button--secondary" href="{escape(repository_url)}" target="_blank" rel="noopener noreferrer">查看 GitHub 仓库</a>
+      </div>
     </section>
     <section class="library" aria-label="Official books">
       {cards_html}
@@ -1438,8 +1452,9 @@ def write_root_files(
     books: list[dict[str, str]],
     site_url: str,
     custom_domain: str,
+    repository_url: str,
 ) -> None:
-    index_html = make_index_html(books)
+    index_html = make_index_html(books, repository_url)
     root_og_relative = f"{OG_DIRNAME}/site-home.svg"
     write_og_image(
         dist_dir,
@@ -1505,6 +1520,7 @@ def main() -> None:
     dist_dir = Path(args.dist_dir).resolve()
     site_url = normalize_site_url(args.site_url)
     custom_domain = args.custom_domain.strip()
+    repository_url = args.repository_url.strip()
 
     if dist_dir.exists():
         shutil.rmtree(dist_dir)
@@ -1516,12 +1532,12 @@ def main() -> None:
         book_dir = REPO_ROOT / book["slug"]
         target_dir = dist_dir / book["slug"]
         copy_book_output(book_dir, target_dir)
-        inject_switcher(target_dir, book["slug"], books)
+        inject_switcher(target_dir, book["slug"], books, repository_url)
         inject_agentway_cta(target_dir, book)
         sync_page_titles(target_dir, book)
         inject_book_social_meta(target_dir, book, site_url, dist_dir)
 
-    write_root_files(dist_dir, books, site_url, custom_domain)
+    write_root_files(dist_dir, books, site_url, custom_domain, repository_url)
     write_sitemap(dist_dir, site_url)
 
 
