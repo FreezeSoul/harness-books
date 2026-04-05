@@ -7,7 +7,13 @@ import sys
 import shutil
 from pathlib import Path
 
-from book_meta import escape_latex, load_meta, release_display_items, resolve_book_dir
+from book_meta import (
+    escape_latex,
+    load_meta,
+    release_display_items,
+    resolve_book_dir,
+    resolve_source_dir,
+)
 from build_pandoc_book import build_book
 
 
@@ -15,15 +21,20 @@ def run(args: list[str], *, cwd: Path | None = None) -> None:
     subprocess.run(args, cwd=cwd, check=True)
 
 
-def default_fonts() -> tuple[str, str, str]:
+def default_fonts(language: str) -> tuple[str, str | None, str]:
+    if language.startswith("zh"):
+        if sys.platform == "darwin":
+            return ("Songti SC", "Songti SC", "Menlo")
+        return ("Noto Serif CJK SC", "Noto Serif CJK SC", "Noto Sans Mono")
     if sys.platform == "darwin":
-        return ("Songti SC", "Songti SC", "Menlo")
-    return ("Noto Serif CJK SC", "Noto Serif CJK SC", "Noto Sans Mono")
+        return ("Palatino", "Songti SC", "Menlo")
+    return ("TeX Gyre Pagella", "Noto Serif CJK SC", "Noto Sans Mono")
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Export a book PDF.")
     parser.add_argument("book_dir", nargs="?", help="Book directory path")
+    parser.add_argument("--locale", help="Locale to export, for example en or zh-Hans")
     parser.add_argument(
         "--clean",
         action="store_true",
@@ -132,9 +143,8 @@ def render_title_page(meta: dict, cover_pdf_rel: str | None, release_items: list
     return "\n\n".join(pages) + ("\n" if pages else "")
 
 
-def render_header() -> str:
-    return "\n".join(
-        [
+def render_header(documentclass: str, cjk_mainfont: str | None) -> str:
+    lines = [
             r"\usepackage{graphicx}",
             r"\usepackage{etoolbox}",
             r"\setkeys{Gin}{width=\linewidth,height=0.82\textheight,keepaspectratio}",
@@ -203,8 +213,16 @@ def render_header() -> str:
             r"\apptocmd{\tableofcontents}{\clearpage\endgroup}{}{}",
             r"\makeatother",
             "",
-        ]
-    )
+    ]
+    if not documentclass.startswith("ctex") and cjk_mainfont:
+        lines.extend(
+            [
+                r"\usepackage{xeCJK}",
+                rf"\setCJKmainfont{{{escape_latex(cjk_mainfont)}}}",
+                "",
+            ]
+        )
+    return "\n".join(lines)
 
 
 def ensure_cover_pdf(book_dir: Path, meta: dict, book_output_dir: Path) -> str | None:
@@ -227,8 +245,11 @@ def ensure_cover_pdf(book_dir: Path, meta: dict, book_output_dir: Path) -> str |
 def main() -> None:
     args = parse_args(sys.argv[1:])
     book_dir = resolve_book_dir(args.book_dir)
-    meta = load_meta(book_dir)
+    meta = load_meta(book_dir, args.locale)
+    source_dir = resolve_source_dir(book_dir, args.locale)
     release_items = release_display_items(book_dir, meta, draft=args.draft)
+    pdf_meta = meta.get("pdf", {})
+    documentclass = str(pdf_meta.get("documentclass", "ctexbook" if str(meta.get("language", "")).startswith("zh") else "book"))
 
     if args.clean or args.clean_generated:
         clean_book_outputs(book_dir, meta)
@@ -244,72 +265,74 @@ def main() -> None:
     header_tex = book_output_dir / "header.tex"
 
     book_output_dir.mkdir(parents=True, exist_ok=True)
-    book_md.write_text(build_book(book_dir, meta), encoding="utf-8")
+    book_md.write_text(build_book(book_dir, meta, source_dir), encoding="utf-8")
 
     cover_pdf_rel = ensure_cover_pdf(book_dir, meta, book_output_dir)
     titlepage_tex.write_text(render_title_page(meta, cover_pdf_rel, release_items), encoding="utf-8")
-    header_tex.write_text(render_header(), encoding="utf-8")
+    language = str(meta.get("language", ""))
+    mainfont_default, cjk_mainfont_default, monofont_default = default_fonts(language)
+    mainfont = str(pdf_meta.get("mainfont") or os.environ.get("PDF_MAINFONT") or mainfont_default)
+    cjk_mainfont = str(pdf_meta.get("cjk_mainfont") or os.environ.get("PDF_CJK_MAINFONT") or (cjk_mainfont_default or "")).strip() or None
+    monofont = str(pdf_meta.get("monofont") or os.environ.get("PDF_MONOFONT") or monofont_default)
+    header_tex.write_text(render_header(documentclass, cjk_mainfont), encoding="utf-8")
 
-    mainfont_default, cjk_mainfont_default, monofont_default = default_fonts()
-    mainfont = os.environ.get("PDF_MAINFONT", mainfont_default)
-    cjk_mainfont = os.environ.get("PDF_CJK_MAINFONT", cjk_mainfont_default)
-    monofont = os.environ.get("PDF_MONOFONT", monofont_default)
+    pandoc_args = [
+        "pandoc",
+        str(book_md),
+        "--from",
+        "markdown+raw_tex",
+        "--resource-path",
+        str(book_dir),
+        "--toc",
+        "--toc-depth=2",
+        "--pdf-engine=xelatex",
+        f"--include-before-body={titlepage_tex}",
+        f"--include-in-header={header_tex}",
+        "-V",
+        f"documentclass={documentclass}",
+        "-V",
+        "classoption=oneside",
+        "-V",
+        "papersize=a4",
+        "-V",
+        "fontsize=12pt",
+        "-V",
+        "indent=true",
+        "-V",
+        "geometry:inner=28mm",
+        "-V",
+        "geometry:outer=22mm",
+        "-V",
+        "geometry:top=24mm",
+        "-V",
+        "geometry:bottom=26mm",
+        "-V",
+        "linestretch=1.32",
+        "-V",
+        "colorlinks=true",
+        "-V",
+        "linkcolor=Maroon",
+        "-V",
+        "urlcolor=Maroon",
+        "-V",
+        "citecolor=Maroon",
+        "-V",
+        "filecolor=Maroon",
+        "-V",
+        "toccolor=Maroon",
+        "-V",
+        f"mainfont={mainfont}",
+        "-V",
+        f"monofont={monofont}",
+        "--syntax-highlighting=tango",
+        "-o",
+        str(output),
+    ]
+    if documentclass.startswith("ctex") and cjk_mainfont:
+        pandoc_args.extend(["-V", f"CJKmainfont={cjk_mainfont}"])
 
     run(
-        [
-            "pandoc",
-            str(book_md),
-            "--from",
-            "markdown+raw_tex",
-            "--resource-path",
-            str(book_dir),
-            "--toc",
-            "--toc-depth=2",
-            "--pdf-engine=xelatex",
-            f"--include-before-body={titlepage_tex}",
-            f"--include-in-header={header_tex}",
-            "-V",
-            "documentclass=ctexbook",
-            "-V",
-            "classoption=oneside",
-            "-V",
-            "papersize=a4",
-            "-V",
-            "fontsize=12pt",
-            "-V",
-            "indent=true",
-            "-V",
-            "geometry:inner=28mm",
-            "-V",
-            "geometry:outer=22mm",
-            "-V",
-            "geometry:top=24mm",
-            "-V",
-            "geometry:bottom=26mm",
-            "-V",
-            "linestretch=1.32",
-            "-V",
-            "colorlinks=true",
-            "-V",
-            "linkcolor=Maroon",
-            "-V",
-            "urlcolor=Maroon",
-            "-V",
-            "citecolor=Maroon",
-            "-V",
-            "filecolor=Maroon",
-            "-V",
-            "toccolor=Maroon",
-            "-V",
-            f"mainfont={mainfont}",
-            "-V",
-            f"CJKmainfont={cjk_mainfont}",
-            "-V",
-            f"monofont={monofont}",
-            "--highlight-style=tango",
-            "-o",
-            str(output),
-        ],
+        pandoc_args,
         cwd=book_dir,
     )
 

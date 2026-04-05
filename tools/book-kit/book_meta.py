@@ -11,8 +11,15 @@ LINK_RE = re.compile(r"\(([^)#]+\.md)\)")
 MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 TEXT_LINK_RE = re.compile(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)")
 TOP_HEADING_RE = re.compile(r"^#\s+(.+)$", re.MULTILINE)
-CHAPTER_PREFIX_RE = re.compile(r"^(第\s*[0-9A-Za-z一二三四五六七八九十百千]+\s*章)\s*(.+)$")
-APPENDIX_PREFIX_RE = re.compile(r"^(附录\s*[A-Za-z一二三四五六七八九十]+)\s*(.+)$")
+CHAPTER_PREFIX_RE = re.compile(
+    r"^((?:第\s*[0-9A-Za-z一二三四五六七八九十百千]+\s*章)|(?:Chapter\s+[0-9A-Za-zIVXLC]+))[:：\s-]*(.+)$",
+    re.IGNORECASE,
+)
+APPENDIX_PREFIX_RE = re.compile(
+    r"^((?:附录\s*[A-Za-z一二三四五六七八九十]+)|(?:Appendix\s+[A-Za-z0-9]+))[:：\s-]*(.+)$",
+    re.IGNORECASE,
+)
+DEFAULT_LOCALE = "zh-Hans"
 
 
 def resolve_book_dir(raw_path: str | None) -> Path:
@@ -21,8 +28,24 @@ def resolve_book_dir(raw_path: str | None) -> Path:
     return Path.cwd().resolve()
 
 
-def load_meta(book_dir: Path) -> dict:
-    meta_path = book_dir / "book.json"
+def resolve_source_dir(book_dir: Path, locale: str | None = None) -> Path:
+    if not locale:
+        return book_dir
+
+    locale_dir = book_dir / "locales" / locale
+    if locale_dir.exists():
+        return locale_dir
+    return book_dir
+
+
+def resolve_build_dir(book_dir: Path, locale: str | None = None) -> Path:
+    if not locale:
+        return book_dir / "_book"
+    return book_dir / "_book" / locale
+
+
+def load_meta(book_dir: Path, locale: str | None = None) -> dict:
+    meta_path = resolve_source_dir(book_dir, locale) / "book.json"
     if not meta_path.exists():
         raise SystemExit(f"Missing book metadata: {meta_path}")
     return json.loads(meta_path.read_text(encoding="utf-8"))
@@ -46,7 +69,7 @@ def git_revision(book_dir: Path) -> str | None:
 def release_display_items(book_dir: Path, meta: dict, *, draft: bool = False) -> list[str]:
     items: list[str] = []
     if draft:
-        items.append("Draft")
+        items.append(str(meta.get("draft_label", "Draft")).strip() or "Draft")
         items.append(dt.date.today().isoformat())
     else:
         release_date = str(meta.get("release_date", "")).strip()
@@ -60,8 +83,8 @@ def release_display_items(book_dir: Path, meta: dict, *, draft: bool = False) ->
     return items
 
 
-def chapter_paths(book_dir: Path) -> list[str]:
-    summary_path = book_dir / "SUMMARY.md"
+def chapter_paths(source_dir: Path) -> list[str]:
+    summary_path = source_dir / "SUMMARY.md"
     if not summary_path.exists():
         raise SystemExit(f"Missing SUMMARY.md: {summary_path}")
 
@@ -133,7 +156,7 @@ def derive_short_title(title: str) -> str:
                     return f"{prefix} {rest.split(separator, 1)[0].strip()}".strip()
             return title
 
-    for prefix in ("前言", "序言", "导读"):
+    for prefix in ("前言", "序言", "导读", "Preface", "Introduction"):
         if title.startswith(prefix):
             rest = title[len(prefix) :].strip()
             for separator in ("，", ",", "、", "：", ":", " "):
@@ -165,7 +188,13 @@ def replace_top_heading_with_latex(text: str, *, short_title: str) -> str:
     return text[: match.start()] + replacement + text[match.end() :]
 
 
-def normalize_readme(text: str, *, title: str, cover_alt: str | None) -> str:
+def normalize_readme(
+    text: str,
+    *,
+    title: str,
+    cover_alt: str | None,
+    front_page_heading: str = "导读",
+) -> str:
     lines = text.splitlines()
     filtered: list[str] = []
     for line in lines:
@@ -177,4 +206,4 @@ def normalize_readme(text: str, *, title: str, cover_alt: str | None) -> str:
         filtered.append(line)
 
     body = strip_markdown_links("\n".join(filtered).strip())
-    return "# 导读\n\n" + body + "\n"
+    return f"# {front_page_heading}\n\n" + body + "\n"

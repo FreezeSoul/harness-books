@@ -12,6 +12,8 @@ from html import escape, unescape as html_unescape
 from pathlib import Path
 from urllib.parse import quote
 
+from book_meta import load_meta
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BOOK_DIRS = ("book1-claude-code", "book2-comparing")
@@ -20,6 +22,98 @@ OG_DIRNAME = "og"
 DEFAULT_SITE_URL = "https://harness-books.agentway.dev"
 DEFAULT_CUSTOM_DOMAIN = "harness-books.agentway.dev"
 DEFAULT_REPOSITORY_URL = "https://github.com/wquguru/harness-books"
+SITE_LOCALES = (
+    {"code": "zh-Hans", "prefix": "", "name": "中文"},
+    {"code": "en", "prefix": "en", "name": "English"},
+)
+
+
+def locale_config(locale: str) -> dict[str, str]:
+    if locale == "en":
+        return {
+            "home_label": "Home",
+            "download_pdf_label": "Download PDF",
+            "github_label": "GitHub",
+            "site_label": "Harness Books",
+            "switcher_aria": "Book switcher",
+            "further_reading_label": "Further Reading",
+            "prev_label": "Previous chapter",
+            "next_label": "Next chapter",
+            "cta_title": "This book stands on its own. AgentWay is a separate practice platform.",
+            "cta_body_default": "Harness Books already contains the full public text. Its goal is to explain the control structures and judgments behind harness design. AgentWay is related, but it is not the next chapter of this book. If you want to apply these methods in training, drills, and ongoing practice, you can explore it separately.",
+            "cta_body_book2": "This comparative book already lays out the key divergences between Claude Code and Codex. AgentWay is related, but it is not the next chapter of this book. If you want to apply these judgments in training, drills, and ongoing practice, you can explore it separately.",
+            "cta_primary": "Explore AgentWay",
+            "cta_secondary": "See Where It Fits",
+            "root_lang": "en",
+            "root_title": "Harness Books",
+            "root_description": "Two books on harness engineering: one on the runtime discipline behind Claude Code, and one comparing the harness philosophies of Claude Code and Codex.",
+            "hero_eyebrow": "Source-guided analysis of Claude Code and Codex",
+            "hero_title": "A two-book series on harness engineering for coding agents",
+            "repo_button": "View the GitHub repository",
+            "seo_what": "What Is Harness Engineering",
+            "seo_what_body": "Harness engineering is about control structure. It asks how the control plane, query loop, permissions, recovery, verification, state, and local governance work together to keep an agent system bounded and accountable.",
+            "seo_learn": "What You Will Learn",
+            "seo_learn_body": "These books cover the Claude Code runtime, Claude Code vs Codex, coding-agent architecture, recovery paths, verification discipline, approval policy, and context governance.",
+            "seo_agentway": "What Is AgentWay",
+            "seo_agentway_body": "Harness Books is the public home of these two books. AgentWay is a related but separate practice platform, not the hidden continuation of this site.",
+            "footer_note": "This site provides the full public text of both books. On desktop you can switch between books directly inside the reader. On mobile the navigation adapts to touch-friendly vertical layouts.",
+            "read_online_label": "Read Online",
+            "toc_label": "View Contents",
+            "book_cover_alt_suffix": "cover",
+            "og_footer_home": "HARNESS BOOKS / HOME",
+            "og_footer_book": "HARNESS BOOKS / EN EDITION",
+        }
+    return {
+        "home_label": "首页",
+        "download_pdf_label": "下载 PDF",
+        "github_label": "GitHub",
+        "site_label": "Harness Books",
+        "switcher_aria": "Book switcher",
+        "further_reading_label": "延伸阅读",
+        "prev_label": "回到上一章",
+        "next_label": "继续阅读下一章",
+        "cta_title": "这本书可以独立阅读，AgentWay 是一个独立的实践平台。",
+        "cta_body_default": "Harness Books 提供的是完整公开内容，重点是把 Harness 的控制结构与判断讲清楚。AgentWay 和这些主题相关，但它不是本书的后续章节；如果你想把这些方法继续用于训练、项目演练和持续实践，可以再单独了解它。",
+        "cta_body_book2": "这本比较书已经把 Claude Code 与 Codex 的关键分歧完整展开。AgentWay 和这些主题相关，但它不是这本书的下一章；如果你想把这些判断继续用于训练、项目演练和持续实践，可以再单独了解它。",
+        "cta_primary": "了解 AgentWay",
+        "cta_secondary": "了解适用场景",
+        "root_lang": "zh-Hans",
+        "root_title": "Harness Books",
+        "root_description": "两本围绕 Harness Engineering 的中文书稿：一本文档化 Claude Code 的工程约束，一本比较 Claude Code 与 Codex 的 harness 路线。",
+        "hero_eyebrow": "Claude Code 和 Codex 的源码和设计哲学",
+        "hero_title": "全网最值得读的Harness工程实践系列书籍（共两本）",
+        "repo_button": "查看 GitHub 仓库",
+        "seo_what": "What Is Harness Engineering",
+        "seo_what_body": "Harness Engineering 讨论的是控制结构。它关心 control plane、query loop、permissions、recovery、verification、state 和 local governance 怎样一起维持 agent system 的边界与后果控制。",
+        "seo_learn": "What You Will Learn",
+        "seo_learn_body": "这两本书覆盖 Claude Code guide、Claude Code vs Codex、AI coding agent architecture、agent recovery、agent verification、approval policy 和 context governance 等核心主题。",
+        "seo_agentway": "AgentWay 是什么",
+        "seo_agentway_body": "Harness Books 是这两本书的官网，本身就提供完整公开内容。AgentWay 是相关但独立的实践平台，不是本网站的后续章节；如果你想把书里的方法继续用于训练、项目演练和持续实践，可以再单独了解它。",
+        "footer_note": "这是这两本 Harness 工程书的官网，不需要注册也可以完整阅读。桌面端可以在书内直接切换，移动端会自动调整为更适合触屏阅读的纵向导航。",
+        "read_online_label": "在线阅读",
+        "toc_label": "查看目录",
+        "book_cover_alt_suffix": "封面",
+        "og_footer_home": "HARNESS BOOKS / HOME",
+        "og_footer_book": "HARNESS BOOKS / ZH EDITION",
+    }
+
+
+def locale_prefix(locale: str) -> str:
+    for item in SITE_LOCALES:
+        if item["code"] == locale:
+            return item["prefix"]
+    return ""
+
+
+def locale_name(locale: str) -> str:
+    for item in SITE_LOCALES:
+        if item["code"] == locale:
+            return item["name"]
+    return locale
+
+
+def relative_href(from_dir: str, to_path: str) -> str:
+    return os.path.relpath(to_path, start=from_dir).replace(os.sep, "/")
 BOOK_SWITCHER_CSS = """
 <style>
 :root {
@@ -933,29 +1027,48 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_book_metadata(book_dir: Path) -> dict[str, str]:
-    book_json = json.loads((book_dir / "book.json").read_text(encoding="utf-8"))
-    extras = {
-        "book1-claude-code": {
-            "cover": f"{book_dir.name}/assets/cover-wxb.svg",
-            "kicker": "Runtime Discipline",
-            "lede": "围绕 Claude Code 的运行时骨架展开，重点讨论控制面、连续性、恢复路径与验证分工。",
-            "summary": "适合想先建立完整框架的人。它追问的是一个 agent 系统为什么会长出 Query Loop、权限判定、上下文治理和团队制度这些器官。系统要有体面，残局就得有人接。",
-            "facts": ("Control Plane", "Query Loop", "Recovery"),
+def load_book_metadata(book_dir: Path, locale: str) -> dict[str, str]:
+    book_json = load_meta(book_dir, None if locale == "zh-Hans" else locale)
+    extras_by_locale = {
+        "zh-Hans": {
+            "book1-claude-code": {
+                "kicker": "Runtime Discipline",
+                "lede": "围绕 Claude Code 的运行时骨架展开，重点讨论控制面、连续性、恢复路径与验证分工。",
+                "summary": "适合想先建立完整框架的人。它追问的是一个 agent 系统为什么会长出 Query Loop、权限判定、上下文治理和团队制度这些器官。系统要有体面，残局就得有人接。",
+                "facts": ("Control Plane", "Query Loop", "Recovery"),
+            },
+            "book2-comparing": {
+                "kicker": "Comparative Harness",
+                "lede": "沿着控制面、状态、策略与本地治理比较 Claude Code 和 Codex 两条 harness 路线。",
+                "summary": "适合已经熟悉 agent coding 工具、想直接看架构分歧与选型判断的人。它比较的是控制权、状态治理和组织纪律分别住在哪一层。规矩写在哪里，系统以后就长成什么样。",
+                "facts": ("Policy Layer", "State", "Local Rules"),
+            },
         },
-        "book2-comparing": {
-            "cover": f"{book_dir.name}/assets/cover-wxb.svg",
-            "kicker": "Comparative Harness",
-            "lede": "沿着控制面、状态、策略与本地治理比较 Claude Code 和 Codex 两条 harness 路线。",
-            "summary": "适合已经熟悉 agent coding 工具、想直接看架构分歧与选型判断的人。它比较的是控制权、状态治理和组织纪律分别住在哪一层。规矩写在哪里，系统以后就长成什么样。",
-            "facts": ("Policy Layer", "State", "Local Rules"),
+        "en": {
+            "book1-claude-code": {
+                "kicker": "Runtime Discipline",
+                "lede": "A close reading of Claude Code's runtime structure, focused on control planes, continuity, recovery paths, and verification work split.",
+                "summary": "Best for readers who want the full frame first. It asks why an agent system grows organs such as a query loop, permission checks, context governance, and team rules. If a system is meant to stay composed, someone has to handle the messy endings.",
+                "facts": ("Control Plane", "Query Loop", "Recovery"),
+            },
+            "book2-comparing": {
+                "kicker": "Comparative Harness",
+                "lede": "A comparison of Claude Code and Codex through control planes, state, policy, and local governance.",
+                "summary": "Best for readers who already know coding-agent tools and want the architectural split and selection logic directly. The real comparison is where control, state discipline, and organizational rules actually live.",
+                "facts": ("Policy Layer", "State", "Local Rules"),
+            },
         },
-    }.get(book_dir.name, {})
+    }
+    extras = extras_by_locale.get(locale, {}).get(book_dir.name, {})
+    prefix = locale_prefix(locale)
+    cover = f"{book_dir.name}/assets/cover-wxb.svg" if not prefix else f"{prefix}/{book_dir.name}/assets/cover-wxb.svg"
     return {
         "slug": book_dir.name,
+        "locale": locale,
+        "locale_prefix": prefix,
         "title": book_json.get("title", book_dir.name),
         "description": book_json.get("description", ""),
-        "cover": extras.get("cover", ""),
+        "cover": cover,
         "kicker": extras.get("kicker", ""),
         "lede": extras.get("lede", book_json.get("description", "")),
         "summary": extras.get("summary", book_json.get("description", "")),
@@ -1076,7 +1189,10 @@ def write_og_image(dist_dir: Path, relative_path: str, svg: str) -> None:
     output_path.write_text(svg, encoding="utf-8")
 
 
-def ensure_honkit_output(book_dir: Path) -> Path:
+def ensure_honkit_output(book_dir: Path, locale: str) -> Path:
+    locale_build = book_dir / "_book" / locale
+    if locale != "zh-Hans" and (locale_build / "index.html").exists():
+        return locale_build
     candidates = [
         book_dir / "_book",
         book_dir / book_dir.name / "_book",
@@ -1086,19 +1202,32 @@ def ensure_honkit_output(book_dir: Path) -> Path:
             return output_dir
     raise SystemExit(
         f"Missing Honkit output for {book_dir.name}. Build the site first with "
-        f"`cd {book_dir.name} && npx --yes honkit build . _book`."
+        f"`python3 tools/book-kit/build_honkit.py {book_dir.name}` or "
+        f"`python3 tools/book-kit/build_honkit.py {book_dir.name} --locale {locale}`."
     )
 
 
-def copy_book_output(book_dir: Path, target_dir: Path) -> None:
-    source_dir = ensure_honkit_output(book_dir)
+def copy_book_output(book_dir: Path, target_dir: Path, locale: str) -> None:
+    source_dir = ensure_honkit_output(book_dir, locale)
     if target_dir.exists():
         shutil.rmtree(target_dir)
+    ignore_patterns = ["_texdebug", "_debug", "*.md"]
+    if locale == "zh-Hans":
+        ignore_patterns.extend(
+            [item["prefix"] for item in SITE_LOCALES if item["prefix"]]
+        )
     shutil.copytree(
         source_dir,
         target_dir,
-        ignore=shutil.ignore_patterns("_texdebug", "_debug", "*.md"),
+        ignore=shutil.ignore_patterns(*ignore_patterns),
     )
+
+    assets_dir = book_dir / "assets"
+    if assets_dir.exists():
+        target_assets = target_dir / "assets"
+        if target_assets.exists():
+            shutil.rmtree(target_assets)
+        shutil.copytree(assets_dir, target_assets)
 
     exported_dir = book_dir / "exported"
     if exported_dir.exists():
@@ -1112,34 +1241,62 @@ def build_switcher_markup(
     current_slug: str,
     books: list[dict[str, str]],
     repository_url: str,
+    locale: str,
 ) -> str:
+    strings = locale_config(locale)
+    current_prefix = locale_prefix(locale)
+    current_dir = str(Path(current_prefix) / current_slug) if current_prefix else current_slug
+    home_target = str(Path(current_prefix) / "index.html") if current_prefix else "index.html"
     link_parts = [
-        '<a class="hb-site-switcher__link" href="../index.html">首页</a>'
+        f'<a class="hb-site-switcher__link" href="{escape(relative_href(current_dir, home_target))}">{escape(strings["home_label"])}</a>'
     ]
     current_book = next(book for book in books if book["slug"] == current_slug)
     for book in books:
         classes = "hb-site-switcher__link"
         if book["slug"] == current_slug:
             classes += " is-active"
+        target = (
+            str(Path(book["locale_prefix"]) / book["slug"] / "index.html")
+            if book["locale_prefix"]
+            else str(Path(book["slug"]) / "index.html")
+        )
         link_parts.append(
-            f'<a class="{classes}" href="../{escape(book["slug"])}/">'
+            f'<a class="{classes}" href="{escape(relative_href(current_dir, target))}">'
             f'{escape(book["title"])}</a>'
         )
-    if current_book.get("pdf_path"):
+    for locale_item in SITE_LOCALES:
+        target_prefix = locale_item["prefix"]
+        target = (
+            str(Path(target_prefix) / current_slug / "index.html")
+            if target_prefix
+            else str(Path(current_slug) / "index.html")
+        )
+        classes = "hb-site-switcher__link"
+        if locale_item["code"] == locale:
+            classes += " is-active"
         link_parts.append(
-            f'<a class="hb-site-switcher__link" href="../{escape(current_slug)}/{escape(current_book["pdf_path"])}" download>'
-            "下载 PDF</a>"
+            f'<a class="{classes}" href="{escape(relative_href(current_dir, target))}">{escape(locale_item["name"])}</a>'
+        )
+    if current_book.get("pdf_path"):
+        pdf_target = (
+            str(Path(current_prefix) / current_slug / current_book["pdf_path"])
+            if current_prefix
+            else str(Path(current_slug) / current_book["pdf_path"])
+        )
+        link_parts.append(
+            f'<a class="hb-site-switcher__link" href="{escape(relative_href(current_dir, pdf_target))}" download>'
+            f'{escape(strings["download_pdf_label"])}</a>'
         )
     if repository_url:
         link_parts.append(
-            f'<a class="hb-site-switcher__link" href="{escape(repository_url)}" target="_blank" rel="noopener noreferrer">GitHub</a>'
+            f'<a class="hb-site-switcher__link" href="{escape(repository_url)}" target="_blank" rel="noopener noreferrer">{escape(strings["github_label"])}</a>'
         )
 
     links_html = "".join(link_parts)
     return (
-        '<div class="hb-site-switcher" role="navigation" aria-label="Book switcher">'
+        f'<div class="hb-site-switcher" role="navigation" aria-label="{escape(strings["switcher_aria"])}">'
         '<div class="hb-site-switcher__brand">'
-        '<p class="hb-site-switcher__eyebrow">Harness Books</p>'
+        f'<p class="hb-site-switcher__eyebrow">{escape(strings["site_label"])}</p>'
         f'<p class="hb-site-switcher__title">{escape(current_book["title"])}</p>'
         "</div>"
         f'<div class="hb-site-switcher__links">{links_html}</div>'
@@ -1152,8 +1309,9 @@ def inject_switcher(
     current_slug: str,
     books: list[dict[str, str]],
     repository_url: str,
+    locale: str,
 ) -> None:
-    switcher_markup = build_switcher_markup(current_slug, books, repository_url)
+    switcher_markup = build_switcher_markup(current_slug, books, repository_url, locale)
     for html_path in book_publish_dir.rglob("*.html"):
         if "gitbook" in html_path.parts:
             continue
@@ -1178,25 +1336,20 @@ def inject_switcher(
         html_path.write_text(html, encoding="utf-8")
 
 
-def build_agentway_cta(book: dict[str, str]) -> str:
-    title = "这本书可以独立阅读，AgentWay 是一个独立的实践平台。"
-    body = (
-        "Harness Books 提供的是完整公开内容，重点是把 Harness 的控制结构与判断讲清楚。"
-        "AgentWay 和这些主题相关，但它不是本书的后续章节；如果你想把这些方法继续用于训练、项目演练和持续实践，可以再单独了解它。"
-    )
-    if book["slug"] == "book2-comparing":
-        body = (
-            "这本比较书已经把 Claude Code 与 Codex 的关键分歧完整展开。"
-            "AgentWay 和这些主题相关，但它不是这本书的下一章；如果你想把这些判断继续用于训练、项目演练和持续实践，可以再单独了解它。"
-        )
+def build_agentway_cta(book: dict[str, str], locale: str) -> str:
+    strings = locale_config(locale)
+    title = strings["cta_title"]
+    body = strings["cta_body_book2"] if book["slug"] == "book2-comparing" else strings["cta_body_default"]
+    agentway_base = "https://agentway.dev" if locale == "en" else "https://agentway.dev/zh"
+    pricing_url = f"{agentway_base}/pricing"
     return (
         '<aside class="hb-agentway-cta" aria-label="Further Reading">'
-        '<p class="hb-agentway-cta__eyebrow">延伸阅读</p>'
+        f'<p class="hb-agentway-cta__eyebrow">{escape(strings["further_reading_label"])}</p>'
         f"<h3>{escape(title)}</h3>"
         f"<p>{escape(body)}</p>"
         '<div class="hb-agentway-cta__actions">'
-        '<a class="hb-agentway-cta__link hb-agentway-cta__link--primary" href="https://agentway.dev/zh">了解 AgentWay</a>'
-        '<a class="hb-agentway-cta__link" href="https://agentway.dev/zh/pricing">了解适用场景</a>'
+        f'<a class="hb-agentway-cta__link hb-agentway-cta__link--primary" href="{escape(agentway_base)}">{escape(strings["cta_primary"])}</a>'
+        f'<a class="hb-agentway-cta__link" href="{escape(pricing_url)}">{escape(strings["cta_secondary"])}</a>'
         "</div>"
         "</aside>"
     )
@@ -1217,7 +1370,8 @@ def extract_navigation_target(html: str, direction: str) -> tuple[str, str] | No
     return href, label
 
 
-def build_inline_pager(html: str) -> str:
+def build_inline_pager(html: str, locale: str) -> str:
+    strings = locale_config(locale)
     links: list[str] = []
     prev_target = extract_navigation_target(html, "prev")
     next_target = extract_navigation_target(html, "next")
@@ -1227,7 +1381,7 @@ def build_inline_pager(html: str) -> str:
         links.append(
             '<a class="hb-inline-pager__link hb-inline-pager__link--prev" '
             f'href="{escape(href)}">'
-            '<span class="hb-inline-pager__eyebrow">回到上一章</span>'
+            f'<span class="hb-inline-pager__eyebrow">{escape(strings["prev_label"])}</span>'
             f'<span class="hb-inline-pager__title">{escape(label)}</span>'
             "</a>"
         )
@@ -1237,7 +1391,7 @@ def build_inline_pager(html: str) -> str:
         links.append(
             '<a class="hb-inline-pager__link hb-inline-pager__link--next" '
             f'href="{escape(href)}">'
-            '<span class="hb-inline-pager__eyebrow">继续阅读下一章</span>'
+            f'<span class="hb-inline-pager__eyebrow">{escape(strings["next_label"])}</span>'
             f'<span class="hb-inline-pager__title">{escape(label)}</span>'
             "</a>"
         )
@@ -1247,18 +1401,18 @@ def build_inline_pager(html: str) -> str:
     return '<nav class="hb-inline-pager" aria-label="Chapter navigation">' + "".join(links) + "</nav>"
 
 
-def build_endcap(html: str, book: dict[str, str]) -> str:
-    pager = build_inline_pager(html)
-    cta = build_agentway_cta(book)
+def build_endcap(html: str, book: dict[str, str], locale: str) -> str:
+    pager = build_inline_pager(html, locale)
+    cta = build_agentway_cta(book, locale)
     return f'<div class="hb-endcap">{pager}{cta}</div>'
 
 
-def inject_agentway_cta(book_publish_dir: Path, book: dict[str, str]) -> None:
+def inject_agentway_cta(book_publish_dir: Path, book: dict[str, str], locale: str) -> None:
     for html_path in book_publish_dir.rglob("*.html"):
         if "gitbook" in html_path.parts:
             continue
         html = html_path.read_text(encoding="utf-8")
-        endcap = build_endcap(html, book)
+        endcap = build_endcap(html, book, locale)
         if '<div class="hb-endcap">' in html:
             html = re.sub(
                 r'<div class="hb-endcap">.*?</div>',
@@ -1382,6 +1536,11 @@ def inject_book_social_meta(
     dist_dir: Path,
 ) -> None:
     description = book.get("lede") or book.get("description") or book["title"]
+    book_root = (
+        f'{book["locale_prefix"]}/{book["slug"]}/'
+        if book["locale_prefix"]
+        else f'{book["slug"]}/'
+    )
     for html_path in book_publish_dir.rglob("*.html"):
         if "gitbook" in html_path.parts:
             continue
@@ -1398,7 +1557,7 @@ def inject_book_social_meta(
         stem = Path(relative_html).stem
         page_url = join_public_url(
             site_url,
-            f"{book['slug']}/" if stem == "index" else relative_html,
+            book_root if stem == "index" else relative_html,
         )
         og_relative = f"{OG_DIRNAME}/{book['slug']}/{safe_stem(stem)}.svg"
         write_og_image(
@@ -1418,7 +1577,7 @@ def inject_book_social_meta(
             description=description,
             page_url=page_url,
             image_url=join_public_url(site_url, og_relative),
-            image_alt=f"{book['title']} 封面",
+            image_alt=f"{book['title']} {locale_config(book['locale'])['book_cover_alt_suffix']}",
         )
         html = inject_json_ld(
             html,
@@ -1432,7 +1591,7 @@ def inject_book_social_meta(
                 "isPartOf": {
                     "@type": "Book",
                     "name": book["title"],
-                    "url": join_public_url(site_url, f"{book['slug']}/"),
+                    "url": join_public_url(site_url, book_root),
                 },
                 "author": {
                     "@type": "Organization",
@@ -1447,7 +1606,7 @@ def inject_book_social_meta(
                 "@context": "https://schema.org",
                 "@type": "Book",
                 "name": book["title"],
-                "url": join_public_url(site_url, f"{book['slug']}/"),
+                "url": join_public_url(site_url, book_root),
                 "description": book.get("description", ""),
                 "author": {
                     "@type": "Organization",
@@ -1472,7 +1631,7 @@ def inject_book_social_meta(
                         "@type": "ListItem",
                         "position": 2,
                         "name": book["title"],
-                        "item": join_public_url(site_url, f"{book['slug']}/"),
+                        "item": join_public_url(site_url, book_root),
                     },
                     {
                         "@type": "ListItem",
@@ -1486,7 +1645,9 @@ def inject_book_social_meta(
         html_path.write_text(html, encoding="utf-8")
 
 
-def make_index_html(books: list[dict[str, str]], repository_url: str) -> str:
+def make_index_html(books: list[dict[str, str]], repository_url: str, locale: str) -> str:
+    strings = locale_config(locale)
+    current_prefix = locale_prefix(locale)
     cards = []
     for index, book in enumerate(books, start=1):
         facts_html = "".join(
@@ -1494,16 +1655,19 @@ def make_index_html(books: list[dict[str, str]], repository_url: str) -> str:
         )
         pdf_action = ""
         if book.get("pdf_path"):
+            pdf_target = (
+                f'{book["slug"]}/{book["pdf_path"]}'
+            )
             pdf_action = (
                 f'<a class="button button--secondary" '
-                f'href="{escape(book["slug"])}/{escape(book["pdf_path"])}" download>'
-                "下载 PDF</a>"
+                f'href="{escape(pdf_target)}" download>'
+                f'{escape(strings["download_pdf_label"])}</a>'
             )
         cards.append(
             f"""
 <article class="book-card">
   <div class="book-card__cover-wrap">
-    <img class="book-card__cover" src="{escape(book["cover"])}" alt="{escape(book["title"])} 封面" loading="lazy">
+    <img class="book-card__cover" src="{escape(book["cover"])}" alt="{escape(book["title"])} {escape(strings["book_cover_alt_suffix"])}" loading="lazy">
   </div>
   <div class="book-card__body">
     <div class="book-card__meta">
@@ -1518,8 +1682,8 @@ def make_index_html(books: list[dict[str, str]], repository_url: str) -> str:
     <div class="book-card__facts">{facts_html}</div>
     <p class="book-card__summary">{escape(book["summary"])}</p>
     <div class="book-card__actions">
-      <a class="button button--primary" href="{escape(book["slug"])}/">在线阅读</a>
-      <a class="button button--secondary" href="{escape(book["slug"])}/index.html">查看目录</a>
+      <a class="button button--primary" href="{escape(book["slug"])}/">{escape(strings["read_online_label"])}</a>
+      <a class="button button--secondary" href="{escape(book["slug"])}/index.html">{escape(strings["toc_label"])}</a>
       {pdf_action}
     </div>
   </div>
@@ -1528,22 +1692,34 @@ def make_index_html(books: list[dict[str, str]], repository_url: str) -> str:
         )
 
     cards_html = "\n".join(cards)
+    language_links = []
+    current_dir = current_prefix or "."
+    for item in SITE_LOCALES:
+        target = f'{item["prefix"]}/index.html' if item["prefix"] else "index.html"
+        classes = "button button--secondary"
+        if item["code"] == locale:
+            classes = "button button--primary"
+        language_links.append(
+            f'<a class="{classes}" href="{escape(relative_href(current_dir, target))}">{escape(item["name"])}</a>'
+        )
+    language_switch = "".join(language_links)
     return f"""<!DOCTYPE html>
-<html lang="zh-Hans">
+<html lang="{escape(strings["root_lang"])}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Harness Books</title>
-  <meta name="description" content="两本围绕 Harness Engineering 的中文书稿：一本文档化 Claude Code 的工程约束，一本比较 Claude Code 与 Codex 的 harness 路线。">
+  <title>{escape(strings["root_title"])}</title>
+  <meta name="description" content="{escape(strings["root_description"])}">
   {SITE_INDEX_CSS}
 </head>
 <body>
   <main class="site-shell">
     <section class="hero">
-      <p class="hero__eyebrow">Claude Code 和 Codex 的源码和设计哲学</p>
-      <h1>全网最值得读的Harness工程实践系列书籍（共两本）</h1>
+      <p class="hero__eyebrow">{escape(strings["hero_eyebrow"])}</p>
+      <h1>{escape(strings["hero_title"])}</h1>
       <div class="seo-block__actions">
-        <a class="button button--secondary" href="{escape(repository_url)}" target="_blank" rel="noopener noreferrer">查看 GitHub 仓库</a>
+        {language_switch}
+        <a class="button button--secondary" href="{escape(repository_url)}" target="_blank" rel="noopener noreferrer">{escape(strings["repo_button"])}</a>
       </div>
     </section>
     <section class="library" aria-label="Official books">
@@ -1551,23 +1727,23 @@ def make_index_html(books: list[dict[str, str]], repository_url: str) -> str:
     </section>
     <section class="seo-sections" aria-label="Harness engineering guide">
       <article class="seo-block">
-        <h3>What Is Harness Engineering</h3>
-        <p>Harness Engineering 讨论的是控制结构。它关心 control plane、query loop、permissions、recovery、verification、state 和 local governance 怎样一起维持 agent system 的边界与后果控制。</p>
+        <h3>{escape(strings["seo_what"])}</h3>
+        <p>{escape(strings["seo_what_body"])}</p>
       </article>
       <article class="seo-block">
-        <h3>What You Will Learn</h3>
-        <p>这两本书覆盖 Claude Code guide、Claude Code vs Codex、AI coding agent architecture、agent recovery、agent verification、approval policy 和 context governance 等核心主题。</p>
+        <h3>{escape(strings["seo_learn"])}</h3>
+        <p>{escape(strings["seo_learn_body"])}</p>
       </article>
       <article class="seo-block">
-        <h3>AgentWay 是什么</h3>
-        <p>Harness Books 是这两本书的官网，本身就提供完整公开内容。AgentWay 是相关但独立的实践平台，不是本网站的后续章节；如果你想把书里的方法继续用于训练、项目演练和持续实践，可以再单独了解它。</p>
+        <h3>{escape(strings["seo_agentway"])}</h3>
+        <p>{escape(strings["seo_agentway_body"])}</p>
         <div class="seo-block__actions">
-          <a class="button button--primary" href="https://agentway.dev/zh">了解 AgentWay</a>
-          <a class="button button--secondary" href="https://agentway.dev/zh/pricing">了解适用场景</a>
+          <a class="button button--primary" href="{escape('https://agentway.dev' if locale == 'en' else 'https://agentway.dev/zh')}">{escape(strings["cta_primary"])}</a>
+          <a class="button button--secondary" href="{escape(('https://agentway.dev' if locale == 'en' else 'https://agentway.dev/zh') + '/pricing')}">{escape(strings["cta_secondary"])}</a>
         </div>
       </article>
     </section>
-    <p class="footer-note">这是这两本 Harness 工程书的官网，不需要注册也可以完整阅读。桌面端可以在书内直接切换，移动端会自动调整为更适合触屏阅读的纵向导航。</p>
+    <p class="footer-note">{escape(strings["footer_note"])}</p>
   </main>
 </body>
 </html>
@@ -1580,36 +1756,41 @@ def write_root_files(
     site_url: str,
     custom_domain: str,
     repository_url: str,
+    locale: str,
 ) -> None:
-    index_html = make_index_html(books, repository_url)
-    root_og_relative = f"{OG_DIRNAME}/site-home.svg"
+    strings = locale_config(locale)
+    prefix = locale_prefix(locale)
+    locale_dir = dist_dir if not prefix else dist_dir / prefix
+    locale_dir.mkdir(parents=True, exist_ok=True)
+    index_html = make_index_html(books, repository_url, locale)
+    root_og_relative = f"{OG_DIRNAME}/{'site-home' if not prefix else f'site-home-{prefix}'}.svg"
     write_og_image(
         dist_dir,
         root_og_relative,
         build_og_svg(
             eyebrow="Harness Books",
-            title="Harness Engineering 的两条阅读路径",
+            title="Harness Engineering 的两条阅读路径" if locale == "zh-Hans" else "Two Reading Paths into Harness Engineering",
             subtitle="Claude Code / Codex / Control Plane / Recovery / Policy",
-            footer="HARNESS BOOKS / HOME",
+            footer=strings["og_footer_home"],
             accent_mode="split",
         ),
     )
     index_html = inject_social_meta(
         index_html,
-        page_title="Harness Books",
-        description="两本围绕 Harness Engineering 的中文书稿：一本文档化 Claude Code 的工程约束，一本比较 Claude Code 与 Codex 的 harness 路线。",
-        page_url=join_public_url(site_url, ""),
+        page_title=strings["root_title"],
+        description=strings["root_description"],
+        page_url=join_public_url(site_url, f"{prefix}/" if prefix else ""),
         image_url=join_public_url(site_url, root_og_relative),
-        image_alt="Harness Books 封面预览",
+        image_alt=f'{strings["root_title"]} preview',
     )
     index_html = inject_json_ld(
         index_html,
         {
             "@context": "https://schema.org",
             "@type": "WebSite",
-            "name": "Harness Books",
-            "url": join_public_url(site_url, ""),
-            "description": "两本围绕 Harness Engineering 的中文书稿：一本文档化 Claude Code 的工程约束，一本比较 Claude Code 与 Codex 的 harness 路线。",
+            "name": strings["root_title"],
+            "url": join_public_url(site_url, f"{prefix}/" if prefix else ""),
+            "description": strings["root_description"],
             "publisher": {
                 "@type": "Organization",
                 "name": "AgentWay",
@@ -1617,12 +1798,13 @@ def write_root_files(
             },
         },
     )
-    (dist_dir / "index.html").write_text(index_html, encoding="utf-8")
-    (dist_dir / ".nojekyll").write_text("", encoding="utf-8")
-    if custom_domain:
+    (locale_dir / "index.html").write_text(index_html, encoding="utf-8")
+    if not prefix:
+        (dist_dir / ".nojekyll").write_text("", encoding="utf-8")
+    if custom_domain and not prefix:
         (dist_dir / "CNAME").write_text(custom_domain + "\n", encoding="utf-8")
-    robots_body = "User-agent: *\nAllow: /\nSitemap: " + join_public_url(site_url, "sitemap.xml") + "\n"
-    (dist_dir / "robots.txt").write_text(robots_body, encoding="utf-8")
+        robots_body = "User-agent: *\nAllow: /\nSitemap: " + join_public_url(site_url, "sitemap.xml") + "\n"
+        (dist_dir / "robots.txt").write_text(robots_body, encoding="utf-8")
 
 
 def write_sitemap(dist_dir: Path, site_url: str) -> None:
@@ -1653,18 +1835,22 @@ def main() -> None:
         shutil.rmtree(dist_dir)
     dist_dir.mkdir(parents=True, exist_ok=True)
 
-    books = [load_book_metadata(REPO_ROOT / slug) for slug in BOOK_DIRS]
+    for locale_item in SITE_LOCALES:
+        locale = locale_item["code"]
+        prefix = locale_item["prefix"]
+        books = [load_book_metadata(REPO_ROOT / slug, locale) for slug in BOOK_DIRS]
 
-    for book in books:
-        book_dir = REPO_ROOT / book["slug"]
-        target_dir = dist_dir / book["slug"]
-        copy_book_output(book_dir, target_dir)
-        inject_switcher(target_dir, book["slug"], books, repository_url)
-        inject_agentway_cta(target_dir, book)
-        sync_page_titles(target_dir, book)
-        inject_book_social_meta(target_dir, book, site_url, dist_dir)
+        for book in books:
+            book_dir = REPO_ROOT / book["slug"]
+            base_dir = dist_dir if not prefix else dist_dir / prefix
+            target_dir = base_dir / book["slug"]
+            copy_book_output(book_dir, target_dir, locale)
+            inject_switcher(target_dir, book["slug"], books, repository_url, locale)
+            inject_agentway_cta(target_dir, book, locale)
+            sync_page_titles(target_dir, book)
+            inject_book_social_meta(target_dir, book, site_url, dist_dir)
 
-    write_root_files(dist_dir, books, site_url, custom_domain, repository_url)
+        write_root_files(dist_dir, books, site_url, custom_domain, repository_url, locale)
     write_sitemap(dist_dir, site_url)
 
 
