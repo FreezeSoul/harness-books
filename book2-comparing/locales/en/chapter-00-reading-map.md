@@ -6,6 +6,8 @@ Book One is single-system dissection. It uses Claude Code as a specimen to expla
 
 This comparison book is comparative dissection. It no longer asks only why Claude Code is designed this way, but puts Claude Code and Codex side by side to compare how each admits model unreliability and places order at different layers. Its central question is: when both systems are building a harness, which choices are consensus and which are just different engineering routes?
 
+There is now one more use for that comparison: once you carry these judgments into third-party harnesses, it becomes easier to spot a common failure mode. Many systems also advertise memory, skills, compaction, and multi-agent support, yet their context-governance axis still amounts to pushing more text into prompt first and truncating or rescuing later. That route looks like "more information," but in practice it often burns more tokens while weakening working semantics.
+
 In other words, you can read them as two sequential steps in one research program:
 
 - Step 1: extract general principles of Harness Engineering in Book One.
@@ -86,6 +88,8 @@ If your biggest pain is long-session instability, brittle recovery, and skipped 
 
 If your biggest pain is scattered rules, fuzzy permission boundaries, unstable tool contracts, and non-reproducible team behavior, start with the explicit-control-layer lessons this comparison extracts from Codex.
 
+And if you encounter a system whose continuity depends mainly on stacking bootstrap text, identity files, skill catalogs, and workspace prose into prompt, do not be too impressed by the apparent fullness of context. That is often not a mature third road. It is closer to an intermediate state that has not yet truly governed context.
+
 ## Recommended Reading Order
 
 If you are new to this material set, use this order:
@@ -94,7 +98,7 @@ If you are new to this material set, use this order:
 2. Read [Chapter 1 Why Put Claude Code and Codex Side by Side](chapter-01-why-this-comparison.md) to establish problem framing.
 3. Then read Chapters 2 through 6 in sequence across five axes: control plane, continuity, tool governance, local institutions, and multi-agent verification.
 4. If you only want a quick synthesis, jump to [Chapter 7 Converging Destinations, Diverging Branches](chapter-07-convergence-and-divergence.md).
-5. If your goal is to build systems yourself, finish with [Chapter 8 If You Build One Yourself: Who to Learn from, and What to Learn First](chapter-08-how-to-choose-or-build.md).
+5. If your goal is to build systems yourself, finish with [Chapter 8 If You Build One Yourself: Who to Learn from, and What to Learn First](chapter-08-how-to-choose-or-build.md). That chapter now also includes a three-path diagram showing why some harnesses still feel expensive and disorderly even when their context looks full.
 
 ## One-Sentence Summary
 

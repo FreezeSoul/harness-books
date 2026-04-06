@@ -1,0 +1,92 @@
+@startuml
+title Three Context-Governance Paths: Claude Code vs Codex vs OpenClaw
+
+skinparam backgroundColor transparent
+skinparam dpi 115
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 15
+skinparam TitleFontSize 20
+skinparam PackageFontSize 16
+skinparam RectangleFontSize 15
+skinparam NoteFontSize 14
+skinparam ArrowFontSize 13
+skinparam ArrowColor #5E5A53
+skinparam PackageBorderColor #1D1D1D
+skinparam PackageFontColor #161616
+skinparam RectangleBorderColor #1D1D1D
+skinparam RectangleBackgroundColor #F2E9D9
+skinparam RectangleFontColor #161616
+skinparam NoteBackgroundColor #F5EBDD
+skinparam NoteBorderColor #8C2721
+skinparam NoteFontColor #7B1E1E
+skinparam TitleFontColor #161616
+skinparam RectangleRoundCorner 10
+
+top to bottom direction
+
+package "Claude Code\nBudgeted Working Memory" #E8DDD0 {
+  rectangle "Layered rules\nCLAUDE.md + memory" as cc_rules
+  rectangle "Entrypoint stays short\nindex, not diary" as cc_index
+  rectangle "Session memory\nstructured for continuation" as cc_session
+  rectangle "Compact rebuilds\nworking semantics" as cc_compact
+
+  cc_rules --> cc_index
+  cc_index --> cc_session
+  cc_session --> cc_compact
+}
+
+package "Codex\nStructured Context Units" #EFE6D8 {
+  rectangle "AGENTS.md / skills\nas fragments" as cx_fragments
+  rectangle "Thread / rollout /\nstate substrate" as cx_state
+  rectangle "Policies and tools\nas explicit objects" as cx_policy
+  rectangle "Context source\nis identifiable" as cx_ident
+
+  cx_fragments --> cx_state
+  cx_policy --> cx_state
+  cx_state --> cx_ident
+}
+
+package "OpenClaw\nPrompt-Stacked Context" #F3E6CD {
+  rectangle "Many bootstrap files\nAGENTS / SOUL / TOOLS /\nIDENTITY / USER / MEMORY" as oc_files
+  rectangle "Skills catalog and\nworkspace text injected" as oc_skills
+  rectangle "Large character budgets\nthen truncation" as oc_budget
+  rectangle "Overflow handled later\nby compact / recovery" as oc_recovery
+
+  oc_files --> oc_budget
+  oc_skills --> oc_budget
+  oc_budget --> oc_recovery
+}
+
+cc_compact -[hidden]down-> cx_fragments
+cx_ident -[hidden]down-> oc_files
+
+rectangle "Primary Question" as shared_question #F3ECDD
+shared_question --> cc_rules : what must survive\nfor next action?
+shared_question --> cx_fragments : what kind of context\nis this unit?
+shared_question --> oc_files : what else can still be\nstuffed into prompt?
+
+note bottom of cc_compact
+Governance style:
+- treat context as scarce working memory
+- separate rules, index, session notes
+- compact is a first-class path
+end note
+
+note bottom of cx_ident
+Governance style:
+- emphasize explicit source types
+- context is easier to audit and compose
+- continuity sits on thread/state structure
+end note
+
+note bottom of oc_recovery
+Governance style:
+- inject more text first
+- rely on caps and truncation later
+- recovery exists, but after prompt inflation
+end note
+
+@enduml
