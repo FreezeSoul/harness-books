@@ -1,6 +1,6 @@
 # Appendix A Checklists: Turning Principles into Executable Constraints
 
-Previous chapters discussed principles. If principles cannot be turned into checklists, they often decay into polished correctness. This appendix turns easy-to-say, hard-to-sustain judgments into directly usable lists.
+Previous chapters discussed principles. If principles cannot be turned into checklists, they often decay into judgments that sound right but do not hold up in practice. This appendix turns easy-to-say, hard-to-sustain judgments into directly usable lists.
 
 These checklists do not guarantee automatic improvement. They mainly prevent common and repetitive mistakes from recurring. In engineering, many improvements come from repeating fewer avoidable errors.
 

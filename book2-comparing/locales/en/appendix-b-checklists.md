@@ -1,6 +1,6 @@
 # Appendix B Checklists: How to Tell Whether Your Harness Resembles Claude Code, Codex, or an Unfinished Prototype
 
-If comparison cannot be reduced into checklists, what remains is usually a set of elegant but hard-to-use conclusions. This appendix compresses the previous chapters into questions a team can actually discuss.
+If comparison cannot be reduced into checklists, what remains is usually a set of well-phrased but hard-to-use conclusions. This appendix compresses the previous chapters into questions a team can actually discuss.
 
 ## B.1 Control-plane checklist
 

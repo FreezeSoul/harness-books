@@ -1128,7 +1128,7 @@ def load_book_metadata(book_dir: Path, locale: str) -> dict[str, str]:
             "book1-claude-code": {
                 "kicker": "Runtime Discipline",
                 "lede": "围绕 Claude Code 的运行时骨架展开，重点讨论控制面、连续性、恢复路径与验证分工。",
-                "summary": "适合想先建立完整框架的人。它追问的是一个 agent 系统为什么会长出 Query Loop、权限判定、上下文治理和团队制度这些器官。系统要有体面，残局就得有人接。",
+                "summary": "适合想先建立完整框架的人。它追问的是一个 agent 系统为什么会长出 Query Loop、权限判定、上下文治理和团队制度这些器官。系统要想稳，就得有人处理失败后的残局。",
                 "facts": ("Control Plane", "Query Loop", "Recovery"),
             },
             "book2-comparing": {

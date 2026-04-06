@@ -126,7 +126,7 @@ So recovery fixes not only errors but system self-explainability. Once explainab
 
 This chapter can be compressed into one sentence:
 
-> The dignity of an agent system is shown by maintaining explainable, bounded, and continuable execution order after failure.
+> An agent system shows its reliability by maintaining explainable, bounded, and resumable execution order after failure.
 
 Claude Code source supports this across key points:
 
