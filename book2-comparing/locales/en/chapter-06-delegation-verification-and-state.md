@@ -33,6 +33,8 @@ First, delegation actions become easier to record, audit, and compose, because t
 
 Second, collaboration aligns more naturally with threads, state, and approval systems. Since Codex already treats thread, rollout, and policy as first-class infrastructure, multi-agent work slips into that same infrastructure rather than remaining a local field technique.
 
+That formality is not abstract. In `agent_tool.rs`, `spawn_agent`, `send_input`, `wait_agent`, and `close_agent` each have their own schemas; `send_input` distinguishes `interrupt=true` from default queued delivery; `wait_agent` is parameterized with default, minimum, and maximum timeout ranges; and `close_agent` explicitly documents closing open descendants as well. So Codex is not merely offering "ask another agent for help." It is turning preemption, waiting, and cleanup into protocol fields.
+
 This is a strong foundation for treating multi-agent behavior as platform capability. It may not always feel as nimble, but it is easier to maintain durably.
 
 ## 6.4 Persistent state keeps verification from becoming etiquette

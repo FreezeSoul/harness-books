@@ -53,6 +53,8 @@ More than that, approvals and escalation are modeled as explicit parameters, `re
 
 These names are practically announcing that execution boundaries have become a small policy language rather than a handful of `if / else` checks.
 
+And that policy language is not rhetorical. In `local_tool.rs`, tool schemas explicitly mark required fields and disable stray properties with `additional_properties = false`, which narrows the room for the model to invent parameters. The descriptions for `shell` and `shell_command` even spell out that `workdir` should be set and `cd` should be avoided unless necessary. Meanwhile `execpolicy/src/lib.rs` exports not just a parser and `PolicyParser`, but also helpers such as `blocking_append_allow_prefix_rule` and `blocking_append_network_rule`. Codex is prepared not only to evaluate policy, but to amend it in structured ways.
+
 ## 4.4 Runtime approvals versus policy language
 
 The split between Claude Code and Codex around tool risk can be compressed like this:

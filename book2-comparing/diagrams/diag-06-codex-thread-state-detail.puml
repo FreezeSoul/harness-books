@@ -1,0 +1,83 @@
+@startuml
+title Codex: Thread, Turn, and State Detail
+
+skinparam backgroundColor transparent
+skinparam dpi 135
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 15
+skinparam TitleFontSize 20
+skinparam PackageFontSize 16
+skinparam RectangleFontSize 15
+skinparam NoteFontSize 14
+skinparam ArrowFontSize 13
+skinparam ArrowColor #475569
+skinparam PackageBorderColor #334155
+skinparam PackageFontColor #0F172A
+skinparam RectangleBorderColor #334155
+skinparam RectangleBackgroundColor #F8FAFC
+skinparam RectangleFontColor #0F172A
+skinparam NoteBackgroundColor #FFF7ED
+skinparam NoteBorderColor #C2410C
+skinparam NoteFontColor #7C2D12
+skinparam TitleFontColor #0F172A
+skinparam RectangleRoundCorner 10
+
+top to bottom direction
+
+rectangle "Input\ntext + local images" as input #EFF6FF
+rectangle "normalizeInput()\ncreateOutputSchemaFile()" as prep #DBEAFE
+rectangle "Thread\nid + turn options" as thread #E2E8F0
+rectangle "_exec.run()" as exec #F8FAFC
+
+package "Event Stream" #F8FAFC {
+  rectangle "thread.started\nupdates _id" as started
+  rectangle "item.completed\ncollects outputs" as itemdone
+  rectangle "turn.completed\nusage + summary" as turndone
+
+  started -[hidden]right- itemdone
+  itemdone -[hidden]right- turndone
+}
+
+package "Persistent Continuity" #FFF7ED {
+  rectangle "ThreadManager" as manager
+  rectangle "RolloutRecorder" as rollout
+  rectangle "state_db_bridge" as state
+  rectangle "message_history" as history
+
+  manager -[hidden]right- rollout
+  rollout -[hidden]right- state
+  state -[hidden]right- history
+}
+
+input --> prep
+prep --> thread
+thread --> exec
+exec --> started
+exec --> itemdone
+exec --> turndone
+
+started --> manager
+itemdone --> rollout
+itemdone --> history
+turndone --> state
+manager --> rollout
+
+note bottom of thread
+Turn conditions travel with the thread:
+- approvalPolicy
+- sandboxMode
+- workingDirectory
+- network access
+- additionalDirectories
+end note
+
+note bottom of rollout
+Continuity is not only "keep looping."
+It becomes a recorded thread with replay,
+state handoff, and message evidence.
+end note
+
+@enduml

@@ -56,10 +56,12 @@ Instruction fragments and user injection:
 - `instructions/src/lib.rs`
 - `instructions/src/fragment.rs`
 - `instructions/src/user_instructions.rs`
+- `docs/agents_md.md`
 
 Tools, approvals, and execution policy:
 
 - `tools/src/local_tool.rs`
+- `tools/src/agent_tool.rs`
 - `execpolicy/src/lib.rs`
 - `docs/execpolicy.md`
 - `docs/sandbox.md`
@@ -68,6 +70,10 @@ Threads and state:
 
 - `sdk/typescript/src/thread.ts`
 - `core/src/lib.rs`
+- `core/src/thread_manager.rs`
+- `core/src/rollout.rs`
+- `core/src/state_db_bridge.rs`
+- `core/src/message_history.rs`
 
 Hook event engine:
 

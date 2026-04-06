@@ -53,6 +53,8 @@ Codex 则更接近把“风险动作”的控制做成正式接口约束。
 
 这套命名几乎等于在说：执行边界已经形成一门小型政策语言，而不只是几个 if/else。
 
+而且这种“语言化”不是虚张声势。`local_tool.rs` 里各个工具的 schema 都会明确 required 字段，并把 `additional_properties` 关掉，减少模型乱塞参数的空间；`shell` 和 `shell_command` 的描述里甚至直接写着“尽量不要用 `cd`，应当设置 `workdir`”。`execpolicy/src/lib.rs` 则不只导出 parser 和 `PolicyParser`，还导出 `blocking_append_allow_prefix_rule`、`blocking_append_network_rule` 这种修正规则的 helper。换句话说，Codex 不是只会检查政策，还准备了修改和补丁政策的正式入口。
+
 ## 4.4 运行时审批对照策略语言
 
 Claude Code 和 Codex 在工具风险控制上的分歧，可以概括为：

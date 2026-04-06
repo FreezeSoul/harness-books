@@ -34,6 +34,8 @@ Codex 也有 skill，也有本地规则，也有 hook，但气质明显更制度
 
 先看 skill。`skills/src/lib.rs` 显示系统会把内置 system skills 安装到 `CODEX_HOME/skills/.system`，还会对 skill 资产做 hash/fingerprint。这个细节很说明问题，因为它表明 skill 在 Codex 里不只是临时读入的文本，而是“被安装、被管理、可追踪版本形态”的资产。
 
+更关键的是，它连“什么时候需要重装 skill”都想好了。`install_system_skills()` 会先算 embedded skills 的 fingerprint，只有 marker 不匹配时才删掉旧目录并重新写入；匹配时直接跳过。这个细节看着小，实际上说明 Codex 把 skill 当成可部署资产，而不是每次启动都顺手读一堆模板文本。
+
 再看 `AGENTS.md`。这套机制在 Codex 中不只表示“读一份本地说明”，还伴随着作用域和 hierarchy 的讨论。也就是说，局部规则不只是内容，还带着位置关系。
 
 最后看 hook。`hooks/src/engine/mod.rs` 里把 hook 事件明确拆成：
@@ -45,6 +47,8 @@ Codex 也有 skill，也有本地规则，也有 hook，但气质明显更制度
 - `stop`
 
 而且每个 handler 都有 `event_name`、matcher、timeout、status message、source path、display order 等结构。这说明 Codex 的 hook 更接近显式生命周期事件系统，而不是“哪里方便就塞一个回调”。
+
+再往下看还会发现，hook engine 区分了 `preview_*` 和 `run_*` 两套路径，先预览哪些 handler 会命中，再决定真正执行；在 Windows 上还会因为能力不完整而明确关闭 `codex_hooks` 并返回 warning。也就是说，Codex 连 hook 能不能开、为什么不开，都希望成为系统可解释的一部分。
 
 ## 5.4 Claude Code 偏经验收编，Codex 偏制度挂载
 

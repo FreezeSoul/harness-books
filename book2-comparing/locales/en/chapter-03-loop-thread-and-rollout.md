@@ -47,7 +47,11 @@ Codex looks more ledger-like. Even from `core/src/lib.rs`, continuity is clearly
 - `state`
 - `message_history`
 
+![Codex thread-turn-state detail](diagrams/diag-06-codex-thread-state-detail.png)
+
 Then look at `sdk/typescript/src/thread.ts`. There, `Thread` is already a first-class concept that outside developers can understand and manipulate directly. A thread has an `id`, can `runStreamed()` or `run()`, and `thread.started` reports back the thread ID. Turn-level execution conditions such as approval policy, working directory, sandbox mode, network access, and additional directories are all exposed as explicit parameters tightly coupled to thread execution.
+
+You can see a very literal kind of thread sovereignty there. `runStreamedInternal()` does not just hand input to the backend. It first calls `normalizeInput()`, separating prompt text from local images, then creates an output-schema file with `createOutputSchemaFile()`. The actual `_exec.run()` call carries `threadId`, `approvalPolicy`, `sandboxMode`, `workingDirectory`, `networkAccessEnabled`, and `additionalDirectories` as explicit execution parameters. When the event stream emits `thread.started`, the thread object updates its own `_id`. That means thread is not outer packaging. It is a genuine carrier of turn semantics.
 
 What matters most is that continuity is no longer merely "the loop is still going." It becomes "a thread is being recorded and constrained by a more explicit state structure." The existence of rollout is especially telling: Codex cares deeply about replayability, indexing, persistence, and visibility outside the immediate live session.
 
@@ -72,6 +76,8 @@ This placement of state directly affects recovery and auditability.
 Claude Code's recovery strength comes from proximity to the scene. Many problems are discovered and handled inside the loop itself: reactive compaction, output-token recovery, and tool-interruption cleanup. It does not first need to lift the problem into a higher-order state model before deciding what rollback should mean.
 
 Codex's recovery strength is more likely to appear in traceability. Threads have IDs, rollouts have records, and state bridges plus message history provide clearer external structure. That makes it easier for the system to answer the question, "What exactly happened last turn?" rather than relying on runtime recollection alone.
+
+If you read `core/src/lib.rs` together with that SDK layer, the archive-minded design becomes even clearer. Codex does not merely export `CodexThread`; it also exposes modules and types such as `ThreadManager`, `RolloutRecorder`, `state_db_bridge`, and `message_history`. A system that places those organs near the root module is effectively admitting that continuity is not a side effect of looping. It is infrastructure.
 
 In plain language:
 

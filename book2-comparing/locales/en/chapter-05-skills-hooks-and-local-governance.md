@@ -34,6 +34,8 @@ Codex also has skills, local rules, and hooks, but the temperament is more insti
 
 Start with skills. `skills/src/lib.rs` shows that system skills are installed into `CODEX_HOME/skills/.system` and tracked with hashes or fingerprints. That is revealing, because it means a skill in Codex is not merely text temporarily read into context. It is an installed, managed, versionable asset.
 
+What matters even more is that Codex also decides when those assets need to be refreshed. `install_system_skills()` computes a fingerprint for the embedded skills and skips reinstalling them when the marker already matches. Only mismatches trigger removal and rewrite of the cached system-skills directory. That small detail is a strong signal that Codex treats skills like deployable assets rather than like templates casually reread at startup.
+
 Then look at `AGENTS.md`. In Codex this does not merely mean "read a local note." It comes with ideas of scope and hierarchy. In other words, local rules are not only content. They carry positional relationships.
 
 Finally, look at hooks. `hooks/src/engine/mod.rs` splits hook events explicitly into:
@@ -45,6 +47,8 @@ Finally, look at hooks. `hooks/src/engine/mod.rs` splits hook events explicitly 
 - `stop`
 
 Each handler also carries structured information such as event name, matcher, timeout, status message, source path, and display order. This makes Codex hooks feel less like "drop in a callback wherever convenient" and more like a formal lifecycle event system.
+
+And the engine goes one step further: it separates `preview_*` paths from `run_*` paths, which means the system can first explain which handlers would fire before actually executing them. On Windows it even disables `codex_hooks` with an explicit warning because support is not complete. In other words, Codex tries to make hook capability itself explainable.
 
 ## 5.4 Claude Code absorbs experience; Codex mounts institutions
 

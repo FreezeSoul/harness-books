@@ -20,6 +20,8 @@ Because of this, runtime governance is essential. Control is constantly injected
 
 Codex insists on identifiable fragments. Names like `ContextualUserFragmentDefinition` highlight type, boundaries, wrapping rules, and transformation into messages. AGENTS, skills, and user instructions are not just textual—they are tagged contextual units that the system can recognize and manipulate. This yields stronger debuggability and a path to more programmatic governance, because every instruction already fits into a type hierarchy.
 
+And this is not merely a matter of elegant naming. In `fragment.rs`, Codex really defines constants such as `AGENTS_MD_START_MARKER`, `AGENTS_MD_END_MARKER`, `SKILL_OPEN_TAG`, and `SKILL_CLOSE_TAG`, then uses `ContextualUserFragmentDefinition::wrap()` and `into_message()` to turn those fragments into `ResponseItem::Message`. In `user_instructions.rs`, `UserInstructions` serializes the directory into the line `# AGENTS.md instructions for ...`, while `SkillInstructions` carries explicit `<name>` and `<path>` fields. In other words, Codex tries hard not to make the model guess where a rule came from.
+
 ## 2.4 CLAUDE.md vs AGENTS.md
 
 The distinction between CLAUDE.md and AGENTS.md is revealing. Claude Code’s CLAUDE.md feels like a local bulletin board—an on-site rule set tailored to a directory or workspace. It is pragmatic, local, and mission-focused. Codex’s AGENTS.md, by contrast, names scope, priority, and inheritance. Even when `child_agents_md` is not present, Codex injects scoped instructions to clarify applicability. Claude Code brings local rules into the conversation; Codex brings local rules into the institution.
