@@ -1,92 +1,70 @@
 @startuml
-title Three Context-Governance Paths: Claude Code vs Codex vs OpenClaw
+title Three Context-Governance Paths - Budget, Fragments, Stacking
 
 skinparam backgroundColor transparent
-skinparam dpi 115
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
+skinparam dpi 120
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam PackageFontSize 16
-skinparam RectangleFontSize 15
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
-skinparam ArrowColor #5E5A53
-skinparam PackageBorderColor #1D1D1D
-skinparam PackageFontColor #161616
-skinparam RectangleBorderColor #1D1D1D
-skinparam RectangleBackgroundColor #F2E9D9
-skinparam RectangleFontColor #161616
-skinparam NoteBackgroundColor #F5EBDD
-skinparam NoteBorderColor #8C2721
-skinparam NoteFontColor #7B1E1E
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam RectangleRoundCorner 10
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
 
 top to bottom direction
 
-package "Claude Code\nBudgeted Working Memory" #E8DDD0 {
-  rectangle "Layered rules\nCLAUDE.md + memory" as cc_rules
-  rectangle "Entrypoint stays short\nindex, not diary" as cc_index
-  rectangle "Session memory\nstructured for continuation" as cc_session
-  rectangle "Compact rebuilds\nworking semantics" as cc_compact
+state "<b>Claude Code - budgeted working memory</b>\nPrimary question: what must survive for the next action?" as CC {
+  state "Healthy" as CC_H #EFE6D8
+  state "Warning" as CC_W
+  state "Autocompact" as CC_A #F5EBDD
+  state "Compact rebuild\n-> fresh working floor" as CC_C #E8DDD0
 
-  cc_rules --> cc_index
-  cc_index --> cc_session
-  cc_session --> cc_compact
+  CC_H -right-> CC_W : budget rising
+  CC_W -right-> CC_A : threshold
+  CC_A -right-> CC_C : reactive compact
+  CC_C -up-> CC_H : resume
+  CC_W -up-> CC_H : snip / microcompact
 }
 
-package "Codex\nStructured Context Units" #EFE6D8 {
-  rectangle "AGENTS.md / skills\nas fragments" as cx_fragments
-  rectangle "Thread / rollout /\nstate substrate" as cx_state
-  rectangle "Policies and tools\nas explicit objects" as cx_policy
-  rectangle "Context source\nis identifiable" as cx_ident
+state "<b>Codex - structured context units</b>\nPrimary question: what kind of context is this unit?" as CX {
+  state "Fragment registry\nAGENTS / skills" as CX_Frag #E8DDD0
+  state "Typed policies +\ntool objects" as CX_Obj
+  state "Thread / rollout /\nstate substrate" as CX_Sub
+  state "Addressable context\nwho / when / why" as CX_Addr #EFE6D8
 
-  cx_fragments --> cx_state
-  cx_policy --> cx_state
-  cx_state --> cx_ident
+  CX_Frag -right-> CX_Sub : mounted
+  CX_Obj -right-> CX_Sub : mounted
+  CX_Sub -right-> CX_Addr : every turn
+  CX_Addr -up-> CX_Frag : audit / re-edit
 }
 
-package "OpenClaw\nPrompt-Stacked Context" #F3E6CD {
-  rectangle "Many bootstrap files\nAGENTS / SOUL / TOOLS /\nIDENTITY / USER / MEMORY" as oc_files
-  rectangle "Skills catalog and\nworkspace text injected" as oc_skills
-  rectangle "Large character budgets\nthen truncation" as oc_budget
-  rectangle "Overflow handled later\nby compact / recovery" as oc_recovery
+state "<b>OpenClaw - prompt stacking</b>\nPrimary question: what else can still be stuffed into the prompt?" as OC {
+  state "Bootstrap files\nAGENTS / SOUL / TOOLS /\nIDENTITY / USER / MEMORY" as OC_Boot #E8DDD0
+  state "Inject skill catalog\n+ workspace text" as OC_Skill
+  state "Large char budget" as OC_Big #F5EBDD
+  state "Truncate / recover\nafter overflow" as OC_Rec #F5EBDD
 
-  oc_files --> oc_budget
-  oc_skills --> oc_budget
-  oc_budget --> oc_recovery
+  OC_Boot -right-> OC_Skill
+  OC_Skill -right-> OC_Big
+  OC_Big -right-> OC_Rec : overflow
+  OC_Rec -up-> OC_Boot : reset next turn
 }
 
-cc_compact -[hidden]down-> cx_fragments
-cx_ident -[hidden]down-> oc_files
-
-rectangle "Primary Question" as shared_question #F3ECDD
-shared_question --> cc_rules : what must survive\nfor next action?
-shared_question --> cx_fragments : what kind of context\nis this unit?
-shared_question --> oc_files : what else can still be\nstuffed into prompt?
-
-note bottom of cc_compact
-Governance style:
-- treat context as scarce working memory
-- separate rules, index, session notes
-- compact is a first-class path
-end note
-
-note bottom of cx_ident
-Governance style:
-- emphasize explicit source types
-- context is easier to audit and compose
-- continuity sits on thread/state structure
-end note
-
-note bottom of oc_recovery
-Governance style:
-- inject more text first
-- rely on caps and truncation later
-- recovery exists, but after prompt inflation
-end note
+CC -[hidden]-> CX
+CX -[hidden]-> OC
 
 @enduml

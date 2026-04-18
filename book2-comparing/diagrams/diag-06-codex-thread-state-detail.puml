@@ -1,83 +1,87 @@
 @startuml
-title Codex: Thread, Turn, and State Detail
+title Codex Thread - Turn Lifecycle And Record Fanout
 
 skinparam backgroundColor transparent
-skinparam dpi 135
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam PackageFontSize 16
-skinparam RectangleFontSize 15
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
-skinparam ArrowColor #475569
-skinparam PackageBorderColor #334155
-skinparam PackageFontColor #0F172A
-skinparam RectangleBorderColor #334155
-skinparam RectangleBackgroundColor #F8FAFC
-skinparam RectangleFontColor #0F172A
-skinparam NoteBackgroundColor #FFF7ED
-skinparam NoteBorderColor #C2410C
-skinparam NoteFontColor #7C2D12
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #0F172A
-skinparam RectangleRoundCorner 10
-
-top to bottom direction
-
-rectangle "Input\ntext + local images" as input #EFF6FF
-rectangle "normalizeInput()\ncreateOutputSchemaFile()" as prep #DBEAFE
-rectangle "Thread\nid + turn options" as thread #E2E8F0
-rectangle "_exec.run()" as exec #F8FAFC
-
-package "Event Stream" #F8FAFC {
-  rectangle "thread.started\nupdates _id" as started
-  rectangle "item.completed\ncollects outputs" as itemdone
-  rectangle "turn.completed\nusage + summary" as turndone
-
-  started -[hidden]right- itemdone
-  itemdone -[hidden]right- turndone
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #475569
+skinparam state {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  FontColor #0F172A
+  ArrowColor #475569
+  StartColor #C2410C
+  EndColor #0F172A
+}
+skinparam note {
+  BackgroundColor #FFF7ED
+  BorderColor #C2410C
+  FontColor #7C2D12
 }
 
-package "Persistent Continuity" #FFF7ED {
-  rectangle "ThreadManager" as manager
-  rectangle "RolloutRecorder" as rollout
-  rectangle "state_db_bridge" as state
-  rectangle "message_history" as history
+[*] --> Input
 
-  manager -[hidden]right- rollout
-  rollout -[hidden]right- state
-  state -[hidden]right- history
+state "Input\ntext + local images" as Input #EFF6FF
+state "Prepare\nnormalizeInput\ncreateOutputSchemaFile" as Prepare #DBEAFE
+
+state "Thread (id + options)" as Thread #E2E8F0 {
+  state "approvalPolicy" as TP1
+  state "sandboxMode" as TP2
+  state "workingDirectory" as TP3
+  state "network access" as TP4
+  state "additionalDirectories" as TP5
 }
 
-input --> prep
-prep --> thread
-thread --> exec
-exec --> started
-exec --> itemdone
-exec --> turndone
+state "Run turn (_exec.run)" as Run #F8FAFC
 
-started --> manager
-itemdone --> rollout
-itemdone --> history
-turndone --> state
-manager --> rollout
+state "Events" as Events {
+  state "thread.started\n(assigns _id)" as Started
+  state "item.completed\n(collect outputs)" as Item
+  state "turn.completed\n(usage + summary)" as Turn
+}
 
-note bottom of thread
-Turn conditions travel with the thread:
-- approvalPolicy
-- sandboxMode
-- workingDirectory
-- network access
-- additionalDirectories
+state "Persistent Continuity" as Persist #FFF7ED {
+  state "ThreadManager" as Manager
+  state "RolloutRecorder" as Rollout
+  state "state_db_bridge" as StateDb
+  state "message_history" as History
+}
+
+Input --> Prepare
+Prepare --> Thread : build / reuse
+Thread --> Run : turn begins
+Run --> Started
+Run --> Item
+Run --> Turn
+
+Started --> Manager
+Item --> Rollout
+Item --> History
+Turn --> StateDb
+Manager --> Rollout
+
+Run --> Thread : next turn\n(same id)
+Turn --> [*]
+
+note right of Thread
+  Turn-wide conditions travel
+  with the thread, not with
+  the prompt. A thread is
+  the addressable unit of
+  continuity.
 end note
 
-note bottom of rollout
-Continuity is not only "keep looping."
-It becomes a recorded thread with replay,
-state handoff, and message evidence.
+note right of Persist
+  Continuity becomes recorded
+  evidence: rollout for replay,
+  state for resume, history for
+  later memory synthesis.
 end note
 
 @enduml

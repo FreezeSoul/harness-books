@@ -1,69 +1,70 @@
 @startuml
-title Verification Separation
+title Verification Separation - Independent FSMs For Changing And Proving
 
 skinparam backgroundColor #F7F1E6
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
-skinparam ArrowColor #5E5A53
-skinparam PackageBorderColor #1D1D1D
-skinparam PackageFontColor #161616
-skinparam RectangleBorderColor #1D1D1D
-skinparam RectangleBackgroundColor #F2E9D9
-skinparam RectangleFontColor #161616
-skinparam NoteBackgroundColor #F5EBDD
-skinparam NoteBorderColor #8C2721
-skinparam NoteFontColor #7B1E1E
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam RectangleRoundCorner 10
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
 
-top to bottom direction
+state "Coordinator" as Coord #E8DDD0
 
-rectangle "Coordinator" as coord #E8DDD0
-rectangle "Implementation Worker" as impl #EFE6D8
-rectangle "Verification Worker" as verify #EFE6D8
-rectangle "Runtime / Hooks /\nTask System" as runtime #EFE6D8
+state "Implementation Worker" as Impl {
+  state "Plan change" as IPlan
+  state "Apply change" as IApply
+  state "Self-check\n(build / typecheck)" as ISelf
+  state "Report changes" as IReport
 
-coord --> impl
-impl --> runtime
-runtime --> coord
-coord --> verify
-verify --> runtime
-runtime --> coord
+  [*] --> IPlan
+  IPlan --> IApply
+  IApply --> ISelf
+  ISelf --> IReport
+  IReport --> [*]
+}
 
-impl -[hidden]down- runtime
-coord -[hidden]down- verify
+state "Verification Worker" as Verify {
+  state "Read change\nas evidence" as VRead
+  state "Run independent\nprobes / tests" as VRun
+  state "Contrast with claim" as VContrast
+  state "Report proof or\nfailing edges" as VReport
 
-note right of impl
-implementation task
-end note
+  [*] --> VRead
+  VRead --> VRun
+  VRun --> VContrast
+  VContrast --> VReport
+  VReport --> [*]
+}
 
-note left of runtime
-code changes + self-check
-end note
+Coord --> Impl : implementation task
+Impl --> Coord : "I finished changing it"
+Coord --> Verify : verification task\n(fresh context)
+Verify --> Coord : "it is (not) correct"
 
-note left of verify
-independent verification
-end note
-
-note right of runtime
-proof / failure / edge cases
-verification result
-end note
-
-note bottom of verify
-Verification must remain separate
-from implementation. Otherwise
-the system mistakes
-"I finished changing it"
-for
-"it is now correct."
+note bottom of Verify
+  Verification must not inherit
+  the implementation worker's
+  context, memory, or claim
+  set. Otherwise the system
+  mistakes "I finished changing
+  it" for "it is now correct."
 end note
 
 @enduml

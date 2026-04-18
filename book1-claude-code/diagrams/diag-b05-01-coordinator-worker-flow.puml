@@ -1,15 +1,15 @@
 @startuml
-title Coordinator And Worker Flow
+title Coordinator / Worker Flow - Dispatch, Synthesize, Iterate
 
 skinparam backgroundColor #F7F1E6
-skinparam linetype ortho
 skinparam shadowing false
-skinparam dpi 135
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
 skinparam ArrowColor #5E5A53
 skinparam TitleFontColor #161616
 skinparam sequence {
@@ -28,26 +28,50 @@ skinparam note {
 
 actor User as user
 participant Coordinator as coord
-participant "Research Worker" as research
-participant "Implementation Worker" as impl
-participant "Runtime / Hooks /\nTask System" as runtime
+participant Runtime as runtime
+participant "Research\nWorker" as research
+participant "Impl\nWorker" as impl
+participant "Verify\nWorker" as verify
 
-user -> coord : submit goal
-coord -> runtime : Spawn research workers
-runtime -> research : isolated context
-research --> runtime : findings
-runtime --> coord : research result
-coord -> coord : synthesize findings
-coord -> runtime : Spawn implementation worker
-runtime -> impl : isolated subagent
-impl --> runtime : code changes + self-check
-runtime --> coord : implementation result
-coord --> user : synthesis / risks / next steps
+user -> coord : goal
 
-note right of coord
-The coordinator owns synthesis
-and dispatch. It does more
-than relay worker output.
+coord -> coord : decompose
+
+loop until enough evidence
+  coord -> runtime : spawn research
+  runtime -> research : isolated context
+  research --> runtime : findings
+  runtime --> coord : result
+  coord -> coord : synthesize\n(gaps? risks?)
+end
+
+coord -> runtime : spawn implementation
+runtime -> impl : isolated context
+impl --> runtime : changes + self-check
+runtime --> coord : result
+
+coord -> runtime : spawn verification
+runtime -> verify : independent context
+verify --> runtime : proof / failure / edges
+runtime --> coord : result
+
+alt verification passes
+  coord --> user : synthesis + next steps
+else verification fails
+  coord -> coord : plan new workers
+  note right
+    Feedback loop closes:
+    failed verification becomes
+    the input to the next
+    research or impl cycle.
+  end note
+end
+
+note left of coord
+  Coordinator owns synthesis,
+  dispatch, and the stopping
+  condition. It is not a
+  relay, it is a controller.
 end note
 
 @enduml

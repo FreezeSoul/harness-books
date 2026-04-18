@@ -1,24 +1,23 @@
 @startuml
-title Chapter 3 · QueryEngine State Carry-Over
+title QueryEngine State Carry-Over - What Survives Between Turns
 
 skinparam backgroundColor #FEFEFE
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
-skinparam ranksep 30
-skinparam nodesep 22
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam rectangle {
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
   BackgroundColor #F2E9D9
   BorderColor #1D1D1D
   FontColor #161616
-  RoundCorner 10
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
 }
 skinparam note {
   BackgroundColor #F5EBDD
@@ -26,36 +25,39 @@ skinparam note {
   FontColor #7B1E1E
 }
 
-rectangle "Turn N" as T1 #EFE6D8
-rectangle "Turn N+1" as T2 #EFE6D8
-rectangle "Turn N+2" as T3 #EFE6D8
+state "<b>Conversation Shell</b>\nmutableMessages\nreadFileState cache\nabortController\npermission denials\nusage accounting\nmemory / skill indexes" as Shell #E8DDD0
 
-rectangle "State kept across turns" as StateBox #E8DDD0 {
-  rectangle "mutableMessages" as S1
-  rectangle "readFileState cache" as S2
-  rectangle "abortController" as S3
-  rectangle "permission denials" as S4
-  rectangle "usage accounting" as S5
-  rectangle "memory / skill indexes" as S6
-
-  S1 -[hidden]down- S2
-  S2 -[hidden]down- S3
-  S3 -[hidden]down- S4
-  S4 -[hidden]down- S5
-  S5 -[hidden]down- S6
+state "Turn N" as T1 #EFE6D8 {
+  state "inner loop" as I1
+}
+state "Turn N+1" as T2 #EFE6D8 {
+  state "inner loop" as I2
+}
+state "Turn N+2" as T3 #EFE6D8 {
+  state "inner loop" as I3
 }
 
-T1 --> T2
-T2 --> T3
-StateBox --> T1
-StateBox --> T2
-StateBox --> T3
+[*] --> T1
+T1 --> T2 : next turn
+T2 --> T3 : next turn
+T3 --> [*]
 
-note bottom of StateBox
-  Query loop owns one turn.
-  QueryEngine owns the
-  conversation shell
-  that survives between turns.
+Shell --> T1 : read / write
+Shell --> T2 : read / write
+Shell --> T3 : read / write
+
+note right of Shell
+  Each turn reads and mutates
+  the same shell. Continuity
+  lives here, not inside any
+  single inner loop.
+end note
+
+note bottom of T2
+  A turn is one pass through
+  the inner loop. The shell
+  is what makes turn N+1
+  different from turn N.
 end note
 
 @enduml

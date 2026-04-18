@@ -1,84 +1,59 @@
 @startuml
-title Team Governance Map
+title Team Governance Loop - Codify, Inject, Enforce, Observe, Refine
 
 skinparam backgroundColor #F7F1E6
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
-skinparam ArrowColor #5E5A53
-skinparam PackageBorderColor #1D1D1D
-skinparam PackageFontColor #161616
-skinparam RectangleBorderColor #1D1D1D
-skinparam RectangleBackgroundColor #F2E9D9
-skinparam RectangleFontColor #161616
-skinparam NoteBackgroundColor #F5EBDD
-skinparam NoteBorderColor #8C2721
-skinparam NoteFontColor #7B1E1E
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam RectangleRoundCorner 10
-
-left to right direction
-
-actor Developers as dev
-
-package "Team Institutions" #E8DDD0 {
-  rectangle "Team CLAUDE.md" as team_claude
-  rectangle "Skills" as team_skills
-  rectangle "Permissions /\nApproval" as approval
-  rectangle "Hooks" as hooks
-  rectangle "Verification\nDefinition" as verify_def
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
 }
 
-package "AI Agent Runtime" #EFE6D8 {
-  rectangle "Prompt Assembly" as prompt_assembly
-  rectangle "Query Loop" as runtime_loop
-  rectangle "Tool Execution" as tool_exec
-  rectangle "Recovery /\nCompact /\nSubagents" as recovery
-}
+state "<b>Codify</b>\nteam CLAUDE.md\nskills\nhooks\nverification rules" as Codify #E8DDD0
+state "<b>Inject</b>\nprompt assembly\nruntime activation\npermission config" as Inject #F2E9D9
+state "<b>Enforce</b>\nask / allow / deny\nhook gates\nsubagent boundaries" as Enforce #EFE6D8
+state "<b>Observe</b>\ntranscript\ntask output\nanalytics" as Observe #EFE6D8
+state "<b>Refine</b>\naudit / replay\npostmortems\nrule edits" as Refine #E8DDD0
 
-package "Observability" #EFE6D8 {
-  rectangle "Transcript" as transcript
-  rectangle "Task Output" as output
-  rectangle "Analytics" as analytics
-  rectangle "Audit / Replay" as audit
-}
+Codify --> Inject : versioned\nartifacts
+Inject --> Enforce : active rules\nper turn
+Enforce --> Observe : emits evidence
+Observe --> Refine : patterns / gaps
+Refine --> Codify : updated rules
 
-dev --> runtime_loop : usage / collaboration
-team_claude --> prompt_assembly : stable rules
-team_skills --> runtime_loop : reusable workflow slices
-approval --> tool_exec : allow / ask / deny
-hooks --> runtime_loop : lifecycle governance
-verify_def --> runtime_loop : definition of done
+state "<b>Developer</b>" as Dev #F3E6CD
+Dev --> Inject : session start
+Enforce --> Dev : interactive approval
+Observe --> Dev : live output
 
-prompt_assembly --> runtime_loop
-runtime_loop --> tool_exec
-runtime_loop --> recovery
-
-runtime_loop --> transcript
-tool_exec --> output
-recovery --> analytics
-transcript --> audit
-output --> audit
-analytics --> audit
-
-note bottom of team_skills
-Skills are not prompt scrapbooks.
-They are how a team hardens
-personal experience into
-institutional workflow slices.
+note right of Enforce
+  Live governance runs inside
+  the query loop. Rules that
+  cannot reach this state
+  have no teeth.
 end note
 
-note right of audit
-Real team adoption does not
-deploy capability alone.
-It also deploys the ability
-to explain and audit behavior.
+note right of Refine
+  Adoption without audit is
+  not governance. The loop
+  only closes if observation
+  drives rule change.
 end note
 
 @enduml

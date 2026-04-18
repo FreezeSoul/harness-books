@@ -1,53 +1,73 @@
 @startuml
-title Chapter 4 · Permission Decision Layers
+title Permission Decision Layers - Short-Circuit Ladder To Allow or Deny
 
 skinparam backgroundColor #FEFEFE
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
-skinparam ranksep 38
-skinparam nodesep 26
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam rectangle {
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam activity {
   BackgroundColor #F2E9D9
   BorderColor #1D1D1D
   FontColor #161616
-  RoundCorner 10
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+  DiamondBackgroundColor #F5EBDD
+  DiamondBorderColor #8C2721
 }
 skinparam note {
   BackgroundColor #F5EBDD
   BorderColor #8C2721
   FontColor #7B1E1E
 }
-skinparam ArrowColor #5E5A53
 
-rectangle "Tool request" as Request #EFE6D8
-rectangle "Rules layer\nallow / deny / ask" as Rules #E8DDD0
-rectangle "Mode layer\nbypass / plan /\nauto / default" as Modes #E8DDD0
-rectangle "Automated checks\nclassifier / hooks /\npolicy gates" as Checks #EFE6D8
-rectangle "Interactive approval\nonly when runtime\nshould not decide" as Dialog #F3E6CD
-rectangle "Final result\nALLOW or DENY" as Result #EFE6D8
+start
 
-Request --> Rules
-Rules --> Modes
-Modes --> Checks
-Checks --> Dialog
-Dialog --> Result
-Rules --> Result : hard deny
-Modes --> Result : bypass allow
-Checks --> Result : clear auto decision
+:Tool request;
 
-note right of Rules
-  Claude Code keeps an
-  explicit ask path.
-  Intent is not the same as
-  authorization.
+if (rules layer) then (hard deny)
+  #F5EBDD:DENY;
+  stop
+else (pass)
+endif
+
+if (mode layer) then (bypass allow)
+  #EFE6D8:ALLOW;
+  stop
+else (pass)
+endif
+
+if (automated checks\nclassifier / hooks / policy) then (clear allow)
+  #EFE6D8:ALLOW;
+  stop
+elseif (clear deny) then (deny)
+  #F5EBDD:DENY;
+  stop
+else (ambiguous)
+endif
+
+:Interactive approval\n(only when runtime\nshould not decide);
+
+if (user decides) then (allow)
+  #EFE6D8:ALLOW;
+  stop
+else (deny)
+  #F5EBDD:DENY;
+  stop
+endif
+
+note right
+  Each layer can short-circuit.
+  Later layers only run when
+  earlier ones cannot decide.
+  Intent from the model is not
+  authorization from the human.
 end note
 
 @enduml

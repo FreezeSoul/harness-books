@@ -1,54 +1,73 @@
 @startuml
-title Compact Rebuild Pipeline
+title Compact Rebuild Pipeline - Rebuild The Semantic Floor
 
 skinparam backgroundColor #F7F1E6
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
-skinparam ranksep 30
-skinparam nodesep 26
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
 skinparam ArrowColor #5E5A53
-skinparam RectangleBorderColor #1D1D1D
-skinparam RectangleBackgroundColor #F2E9D9
-skinparam RectangleFontColor #161616
-skinparam RectangleRoundCorner 10
+skinparam activity {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+  DiamondBackgroundColor #F5EBDD
+  DiamondBorderColor #8C2721
+}
 skinparam note {
   BackgroundColor #F5EBDD
   BorderColor #8C2721
   FontColor #7B1E1E
 }
 
-top to bottom direction
+start
 
-rectangle "Strip images /\nreinjected attachments" as strip #E8DDD0
-rectangle "Summarize" as summarize #F2E9D9
-rectangle "Compact request PTL?" as ptl #F5EBDD
-rectangle "Retry with\ntruncated head" as retry #F5EBDD
-rectangle "Build compact\nboundary" as boundary #EFE6D8
-rectangle "Reinject files / plan /\nskills / tool deltas / MCP" as reinject #EFE6D8
-rectangle "Post-compact\nworking context" as post #E8DDD0
+:Strip images /\nreinjected attachments;
 
-strip --> summarize
-summarize --> ptl
-ptl --> retry : yes
-ptl --> boundary : no
-retry --> boundary
-boundary --> reinject
-reinject --> post
+:Build summary request;
 
-note right of post
-The goal of compact is not
-to produce one neat summary.
-It is to rebuild the semantic
-floor that lets the next turn
-keep working.
+if (summary request hits PTL?) then (yes)
+  :Trim oldest history groups;
+  :Retry summary request;
+  if (still fails?) then (yes)
+    :Surface PTL\n(circuit breaker);
+    stop
+  else (no)
+  endif
+else (no)
+endif
+
+:Produce summary;
+:Create compact boundary;
+
+fork
+  :Reinject critical files;
+fork again
+  :Reinject active plan;
+fork again
+  :Reinject skills in use;
+fork again
+  :Reinject tool deltas / MCP;
+end fork
+
+:Post-compact working context;
+
+stop
+
+note right
+  Compact does not try to
+  produce one tidy summary.
+  It rebuilds the minimum
+  semantic floor needed for
+  the next turn to keep
+  doing useful work.
 end note
 
 @enduml

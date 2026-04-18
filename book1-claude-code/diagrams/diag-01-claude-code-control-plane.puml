@@ -1,106 +1,69 @@
 @startuml
-title Claude Code Overall Control Plane
+title Claude Code Control Plane - The Model Is One Phase Of A Loop
 
 skinparam backgroundColor #F7F1E6
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
-skinparam ArrowColor #5E5A53
-skinparam PackageBorderColor #1D1D1D
-skinparam PackageFontColor #161616
-skinparam RectangleBorderColor #1D1D1D
-skinparam RectangleBackgroundColor #F2E9D9
-skinparam RectangleFontColor #161616
-skinparam NoteBackgroundColor #F5EBDD
-skinparam NoteBorderColor #8C2721
-skinparam NoteFontColor #7B1E1E
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam RectangleRoundCorner 10
-
-left to right direction
-
-package "User and Organizational Inputs" #F3ECDD {
-  actor User as user
-  rectangle "Team Policy" as team_policy
-  rectangle "Repo Rules" as repo_rules
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
 }
 
-package "Control Plane" #E8DDD0 {
-  rectangle "System Prompt Assembly" as system_prompt
-  rectangle "CLAUDE.md / Rules" as claude_md
-  rectangle "Memory\nPersistent + Session" as memory
-  rectangle "Skills" as skills
-  rectangle "Hooks" as hooks
+state "<b>Session Inputs</b>\n- user turn / interrupt\n- CLAUDE.md + rules\n- persistent + session memory\n- skills catalog\n- hooks config" as Inputs #E8DDD0
+
+state "<b>External World</b>\n- filesystem\n- bash / git\n- MCP / network" as World #F3E6CD
+
+state "<b>Observability Sinks</b>\n- transcript\n- task output\n- analytics\n- compact boundaries" as Sinks #E8DDD0
+
+state "Turn Loop" as Loop {
+  state "Intake\nprefetch / budget / snip" as Intake
+  state "Stream Model" as Model
+  state "Execute Tools" as Tools
+  state "Merge Effects" as Merge
+  state "Recovery" as Recovery
+  state "Stop Hooks" as Stop
+
+  [*] --> Intake
+  Intake --> Model : within budget
+  Intake --> Recovery : PTL / guard trip
+  Model --> Tools : tool_use
+  Model --> Merge : plain reply
+  Tools --> Merge : results ready
+  Tools --> Recovery : failure / interrupt
+  Merge --> Intake : follow-up turn
+  Merge --> Stop : stable completion
+  Recovery --> Intake : compact / retry
+  Recovery --> Stop : surface error
+  Stop --> [*]
 }
 
-package "Execution Loop" #EFE6D8 {
-  rectangle "Query Loop" as query_loop
-  rectangle "Input Governance" as input_governance
-  rectangle "Model Streaming" as model_streaming
-  rectangle "Tool Orchestration" as tool_orchestration
-  rectangle "Recovery" as recovery
-  rectangle "Continuation / Stop" as continuation
-}
+Inputs --> Intake : assembled\nper turn
+Tools --> World : side effects
+World --> Tools : tool_result
+Merge --> Sinks : append
+Recovery --> Sinks : counters + boundary
 
-package "External Capabilities" #F3E6CD {
-  rectangle "Filesystem" as fs
-  rectangle "Bash / Git" as bash_git
-  rectangle "MCP / Network" as mcp_network
-}
-
-package "Persistence and Observability" #EFE6D8 {
-  rectangle "Transcript" as transcript
-  rectangle "Task Output" as task_output
-  rectangle "Analytics" as analytics
-  rectangle "Compact Boundary" as compact_boundary
-}
-
-user --> query_loop : goals / feedback / interrupts
-team_policy --> system_prompt : team constraints
-repo_rules --> claude_md : repo-level rules
-
-system_prompt --> query_loop
-claude_md --> query_loop
-memory --> query_loop
-skills --> query_loop
-hooks --> query_loop
-
-query_loop --> input_governance
-input_governance --> model_streaming
-model_streaming --> tool_orchestration
-tool_orchestration --> recovery
-recovery --> continuation
-continuation --> query_loop : next turn / stop
-
-tool_orchestration --> fs
-tool_orchestration --> bash_git
-tool_orchestration --> mcp_network
-
-query_loop --> transcript
-query_loop --> task_output
-query_loop --> analytics
-query_loop --> compact_boundary
-compact_boundary --> query_loop : re-enter after compact
-
-note bottom of query_loop
-The model is not the center
-of the system. It is only
-one unstable component inside
-a controlled execution loop.
-end note
-
-note right of recovery
-Recovery paths include:
-- prompt too long
-- max output tokens
-- interrupt
-- tool / hook failure
+note bottom of Loop
+  The model is not the center.
+  It is one phase inside a loop
+  that owns intake, tools,
+  recovery, and stop discipline.
 end note
 
 @enduml

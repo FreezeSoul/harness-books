@@ -1,28 +1,23 @@
 @startuml
-title Chapter 3 · Query Loop Core
+title Query Loop Core - One Iteration Of The While Loop
 
 skinparam backgroundColor #FEFEFE
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
-skinparam ranksep 45
-skinparam nodesep 28
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam activity {
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
   BackgroundColor #F2E9D9
   BorderColor #1D1D1D
   FontColor #161616
   ArrowColor #5E5A53
   StartColor #8C2721
   EndColor #161616
-  DiamondBackgroundColor #F5EBDD
-  DiamondBorderColor #8C2721
 }
 skinparam note {
   BackgroundColor #F5EBDD
@@ -30,50 +25,42 @@ skinparam note {
   FontColor #7B1E1E
 }
 
-start
+state "<b>Loop State</b>\nmessages\ntoolUseContext\ncompact counters\ntransition reason" as LoopState #E8DDD0
 
-:Assemble loop state;
-note right
-  messages
-  toolUseContext
-  compact counters
-  transition reason
+state "Iteration" as Iter {
+  state "Pre-call governance\nbudget / hooks /\nsnip / microcompact" as Pre
+  state "Model stream\ntext / tool_use / usage" as Stream
+  state "Tool work\nplan + execute +\nmerge tool_result" as Tools
+  state "Apply effects" as Apply
+  state "Decide next" as Next
+
+  [*] --> Pre
+  Pre --> Stream : budget ok
+  Pre --> Next : hook / guard blocks
+  Stream --> Tools : tool_use emitted
+  Stream --> Apply : text only
+  Tools --> Apply : results merged
+  Apply --> Next
+}
+
+state "Recoverable\nissue?" as Recover <<choice>>
+state "Turn active?" as Active <<choice>>
+state "Finalize turn" as Final #F2E9D9
+
+LoopState --> Iter : feeds each iteration
+Iter --> Recover : iteration done
+Recover --> Iter : apply compact / retry
+Recover --> Active : stable
+Active --> Iter : yes
+Active --> Final : no
+Final --> [*]
+
+note right of LoopState
+  The loop state is what
+  survives between iterations.
+  Treat it as the real unit
+  of continuity - not the
+  model call itself.
 end note
-
-while (turn still active?) is (yes)
-  :Prepare iteration;
-  :Run pre-call governance;
-  note right
-    budget
-    hooks
-    history snip
-    microcompact
-    collapse / autocompact gates
-  end note
-
-  :Call model and stream events;
-  note right
-    text deltas
-    tool_use blocks
-    usage updates
-    stop reasons
-  end note
-
-  if (tool_use emitted?) then (yes)
-    :Plan tool work;
-    :Execute tools;
-    :Merge tool_result and\ncontext modifiers;
-  else (no)
-  endif
-
-  if (recoverable issue?) then (recover)
-    :Apply compact / retry branch;
-  else (stable)
-    :Append assistant/user/system effects;
-  endif
-endwhile (no)
-
-:Finalize turn and return;
-stop
 
 @enduml

@@ -1,63 +1,65 @@
 @startuml
-title Context Sources And Budget
+title Context Budget - Thresholds That Trigger Specific Actions
 
 skinparam backgroundColor #F7F1E6
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
-skinparam ArrowColor #5E5A53
-skinparam PackageBorderColor #1D1D1D
-skinparam PackageFontColor #161616
-skinparam RectangleBorderColor #1D1D1D
-skinparam RectangleBackgroundColor #F2E9D9
-skinparam RectangleFontColor #161616
-skinparam NoteBackgroundColor #F5EBDD
-skinparam NoteBorderColor #8C2721
-skinparam NoteFontColor #7B1E1E
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam RectangleRoundCorner 10
-
-left to right direction
-
-package "Context sources" #E8DDD0 {
-  rectangle "CLAUDE.md /\nRules" as rules
-  rectangle "Persistent Memory" as persistent
-  rectangle "Session Memory" as session
-  rectangle "Conversation Messages" as messages
-
-  rules --> messages
-  persistent --> messages
-  session --> messages
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
 }
 
-package "Budget axis" #F3E6CD {
-  rectangle "Effective Context Window" as w1
-  rectangle "Warning Buffer" as w2
-  rectangle "Error Buffer" as w3
-  rectangle "Autocompact Threshold" as w4
-  rectangle "Manual Compact Buffer" as w5
+state "<b>Sources (consume same budget)</b>\nCLAUDE.md / rules\npersistent memory\nsession memory\nconversation messages\nreinjected tool output" as Sources #E8DDD0
 
-  w1 --> w2
-  w2 --> w3
-  w3 --> w4
-  w4 --> w5
+state "Budget State" as Budget {
+  state "Healthy\n< warning buffer" as Healthy #EFE6D8
+  state "Warning\n>= warning buffer" as Warning #F2E9D9
+  state "Autocompact\n>= autocompact threshold" as Auto #F5EBDD
+  state "Error Buffer\n>= error buffer" as Err #F5EBDD
+
+  Healthy --> Warning : budget rising
+  Warning --> Auto : keeps rising
+  Auto --> Err : compact failed
+  Warning --> Healthy : snip / microcompact
+  Auto --> Healthy : autocompact ok
+  Err --> Auto : retry compact
 }
 
-messages -[#8C2721]-> w1 : consumed against
+state "Actions" as Actions {
+  state "snip / microcompact" as Snip
+  state "autocompact" as Ac
+  state "reactive compact\nor surface PTL" as Reactive
+}
 
-note bottom of messages
-The point of governance is not
-"how many messages exist,"
-but how rules, memory, and
-conversation from different
-sources consume the same
-context budget together.
+Sources --> Healthy : every turn writes here
+
+Warning --> Snip : trigger
+Auto --> Ac : trigger
+Err --> Reactive : trigger
+
+note right of Budget
+  Governance is not about counting
+  messages. It is about which
+  threshold the combined sources
+  have crossed, and what action
+  that threshold deterministically
+  triggers.
 end note
 
 @enduml

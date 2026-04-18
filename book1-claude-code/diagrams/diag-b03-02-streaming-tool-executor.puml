@@ -1,28 +1,23 @@
 @startuml
-title StreamingToolExecutor Lifecycle
+title StreamingToolExecutor - Per-Tool State Machine
 
 skinparam backgroundColor #F7F1E6
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
-skinparam ranksep 34
-skinparam nodesep 24
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam activity {
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
   BackgroundColor #F2E9D9
   BorderColor #1D1D1D
   FontColor #161616
   ArrowColor #5E5A53
   StartColor #8C2721
   EndColor #161616
-  DiamondBackgroundColor #F5EBDD
-  DiamondBorderColor #8C2721
 }
 skinparam note {
   BackgroundColor #F5EBDD
@@ -30,43 +25,40 @@ skinparam note {
   FontColor #7B1E1E
 }
 
-start
-:Queued;
-:Check canExecuteTool?;
-if (eligible?) then (yes)
-  :Permission check;
-  if (approved?) then (yes)
-    :Executing;
-    if (progress?) then (progress)
-      :Emit progress update;
-    endif
-    if (completed?) then (done)
-      :Completed result ready;
-      :Yield in safe order;
-    else (aborted)
-      :Synthetic error / discard;
-    endif
-  else (no)
-    :Synthetic error;
-  endif
-else (wait)
-  :Wait for promise or progress;
-endif
-:Yielded;
-stop
+[*] --> Queued
 
-note right
-This layer handles streaming
-tool states:
-- queued
-- executing
-- completed
-- yielded
+state "Queued" as Queued
+state "Gated\ncanExecuteTool? +\npermission check" as Gated #F5EBDD
+state "Executing" as Executing #EFE6D8
+state "Progress\nstreamed update" as Progress
+state "Completed" as Completed #EFE6D8
+state "Yielded\nin safe order" as Yielded #E8DDD0
+state "Synthetic Error\ndenied / aborted /\nsibling failed" as Synth #F5EBDD
 
-It also folds interrupts,
-denials, and sibling failure
-into controlled termination
-semantics.
+Queued --> Gated : eligibility check
+Gated --> Executing : approved
+Gated --> Synth : denied / not ready
+Executing --> Progress : partial output
+Progress --> Executing : resume
+Executing --> Completed : done
+Executing --> Synth : interrupt / abort
+Completed --> Yielded : release in order
+Synth --> Yielded : injected as tool_result
+
+Yielded --> [*]
+
+note right of Yielded
+  Yield order matches the
+  assistant's tool_use block
+  order, even when execution
+  finished out of order.
+end note
+
+note right of Synth
+  Failures are not thrown
+  upward; they become
+  tool_results so the loop
+  can keep moving.
 end note
 
 @enduml
