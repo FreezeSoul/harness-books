@@ -1,82 +1,59 @@
 @startuml
-title 团队治理图
+title Team Governance Loop - Codify, Inject, Enforce, Observe, Refine
 
 skinparam backgroundColor #F7F1E6
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
-skinparam ArrowColor #5E5A53
-skinparam PackageBorderColor #1D1D1D
-skinparam PackageFontColor #161616
-skinparam RectangleBorderColor #1D1D1D
-skinparam RectangleBackgroundColor #F2E9D9
-skinparam RectangleFontColor #161616
-skinparam NoteBackgroundColor #F5EBDD
-skinparam NoteBorderColor #8C2721
-skinparam NoteFontColor #7B1E1E
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam RectangleRoundCorner 10
-
-left to right direction
-
-actor Developers as dev
-
-package "团队制度" #E8DDD0 {
-  rectangle "Team CLAUDE.md" as team_claude
-  rectangle "Skills" as team_skills
-  rectangle "Permissions /\nApproval" as approval
-  rectangle "Hooks" as hooks
-  rectangle "Verification\nDefinition" as verify_def
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
 }
 
-package "AI Agent Runtime" #EFE6D8 {
-  rectangle "Prompt Assembly" as prompt_assembly
-  rectangle "Query Loop" as runtime_loop
-  rectangle "Tool Execution" as tool_exec
-  rectangle "Recovery /\nCompact /\nSubagents" as recovery
-}
+state "<b>Codify</b>\nteam CLAUDE.md\nskills\nhooks\nverification rules" as Codify #E8DDD0
+state "<b>Inject</b>\nprompt assembly\nruntime activation\npermission config" as Inject #F2E9D9
+state "<b>Enforce</b>\nask / allow / deny\nhook gates\nsubagent boundaries" as Enforce #EFE6D8
+state "<b>Observe</b>\ntranscript\ntask output\nanalytics" as Observe #EFE6D8
+state "<b>Refine</b>\naudit / replay\npostmortems\nrule edits" as Refine #E8DDD0
 
-package "Observability" #EFE6D8 {
-  rectangle "Transcript" as transcript
-  rectangle "Task Output" as output
-  rectangle "Analytics" as analytics
-  rectangle "Audit / Replay" as audit
-}
+Codify --> Inject : versioned\nartifacts
+Inject --> Enforce : active rules\nper turn
+Enforce --> Observe : emits evidence
+Observe --> Refine : patterns / gaps
+Refine --> Codify : updated rules
 
-dev --> runtime_loop : 使用 / 协作
-team_claude --> prompt_assembly : 稳定规则
-team_skills --> runtime_loop : 可复用流程切片
-approval --> tool_exec : 自动 / 询问 / 拒绝
-hooks --> runtime_loop : 生命周期治理
-verify_def --> runtime_loop : done 的定义
+state "<b>Developer</b>" as Dev #F3E6CD
+Dev --> Inject : session start
+Enforce --> Dev : interactive approval
+Observe --> Dev : live output
 
-prompt_assembly --> runtime_loop
-runtime_loop --> tool_exec
-runtime_loop --> recovery
-
-runtime_loop --> transcript
-tool_exec --> output
-recovery --> analytics
-transcript --> audit
-output --> audit
-analytics --> audit
-
-note bottom of team_skills
-Skill 不是 prompt 收藏夹，
-而是团队把个人经验
-硬化成制度切片的方式。
+note right of Enforce
+  Live governance runs inside
+  the query loop. Rules that
+  cannot reach this state
+  have no teeth.
 end note
 
-note right of audit
-真正的团队落地
-不只部署能力，
-还部署解释能力。
+note right of Refine
+  Adoption without audit is
+  not governance. The loop
+  only closes if observation
+  drives rule change.
 end note
 
 @enduml

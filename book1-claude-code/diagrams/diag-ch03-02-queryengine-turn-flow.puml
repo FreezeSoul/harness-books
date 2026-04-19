@@ -1,28 +1,23 @@
 @startuml
-title Chapter 3 · QueryEngine Turn Flow
+title QueryEngine Turn - SDK Shell Wrapping The Inner Loop
 
 skinparam backgroundColor #FEFEFE
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
-skinparam ranksep 34
-skinparam nodesep 26
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam activity {
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
   BackgroundColor #F2E9D9
   BorderColor #1D1D1D
   FontColor #161616
   ArrowColor #5E5A53
   StartColor #8C2721
   EndColor #161616
-  DiamondBackgroundColor #F5EBDD
-  DiamondBorderColor #8C2721
 }
 skinparam note {
   BackgroundColor #F5EBDD
@@ -30,20 +25,37 @@ skinparam note {
   FontColor #7B1E1E
 }
 
-start
-:submitMessage(...);
-:Normalize input and attachments;
-:Build system / user / tool context;
-:Invoke query(...);
-:Consume streamed query events;
-:Persist transcript and replay markers;
-:Update SDK-facing session state;
-stop
+[*] --> Accept
 
-note right
-  QueryEngine wraps one turn
-  around the lower-level
-  query loop.
+state "Accept\nsubmitMessage(...)" as Accept #E8DDD0
+state "Normalize\ntext + attachments" as Normalize
+state "Assemble turn context\nsystem / user / tool" as Assemble
+state "Inner query loop" as Inner #EFE6D8
+state "Consume stream\nevents -> SDK" as Consume
+state "Persist\ntranscript + replay markers" as Persist
+state "Update session\nmutableMessages etc." as Update #E8DDD0
+
+Accept --> Normalize
+Normalize --> Assemble
+Assemble --> Inner : invoke query(...)
+Inner --> Consume : streamed events
+Consume --> Persist
+Persist --> Update
+Update --> [*]
+
+note right of Inner
+  QueryEngine does not run
+  the turn itself. It brackets
+  one invocation of the inner
+  loop and owns everything
+  outside that loop.
+end note
+
+note right of Update
+  Session state survives
+  between turns; the inner
+  loop is re-entered with it
+  pre-populated.
 end note
 
 @enduml

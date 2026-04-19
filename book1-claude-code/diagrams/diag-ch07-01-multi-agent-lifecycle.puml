@@ -1,28 +1,23 @@
 @startuml
-title Chapter 7 · Multi-Agent Runtime Lifecycle
+title Multi-Agent Runtime Lifecycle - Spawn, Isolate, Reap
 
 skinparam backgroundColor #FEFEFE
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
-skinparam ranksep 44
-skinparam nodesep 28
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam activity {
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
   BackgroundColor #F2E9D9
   BorderColor #1D1D1D
   FontColor #161616
   ArrowColor #5E5A53
   StartColor #8C2721
   EndColor #161616
-  DiamondBackgroundColor #F5EBDD
-  DiamondBorderColor #8C2721
 }
 skinparam note {
   BackgroundColor #F5EBDD
@@ -30,40 +25,50 @@ skinparam note {
   FontColor #7B1E1E
 }
 
-start
+[*] --> Decide
 
-:Parent agent decides to delegate;
-:Resolve agent type and execution mode;
+state "Parent decides\nto delegate" as Decide #E8DDD0
+state "Resolve agent type\n+ execution mode" as Resolve
 
-if (local / worktree / remote?) then (local or worktree)
-  :Build isolated child context;
-  note right
-    cloned file state
-    child abort controller
-    isolated mutable sets
-    shared cache-safe params
-  end note
-  :Run child query loop;
-  :Track progress and collect output;
-else (remote)
-  :Launch remote task and return handle;
-endif
+state "Child runtime" as Child {
+  state "Build isolated\nchild context" as Build
+  state "Run child query loop" as Run #EFE6D8
+  state "Track progress\ncollect output" as Track
 
-if (child completed normally?) then (yes)
-  :Coordinator synthesizes result;
-  :Send implementation or verification next;
-else (no)
-  :Propagate failure / cancellation;
-endif
+  [*] --> Build
+  Build --> Run
+  Run --> Track
+}
 
-:Run cleanup and unregister tracking;
-:Return result to parent agent;
-note right
+state "Remote task\n(return handle)" as Remote #EFE6D8
+state "Completion outcome" as Outcome <<choice>>
+state "Coordinator synthesis" as Synth #E8DDD0
+state "Propagate failure /\ncancellation" as Fail #F5EBDD
+state "Cleanup\nunregister tracking" as Clean #F2E9D9
+
+Decide --> Resolve
+Resolve --> Child : local / worktree
+Resolve --> Remote : remote
+Child --> Outcome
+Remote --> Outcome
+Outcome --> Synth : child completed
+Outcome --> Fail : aborted / error
+Synth --> Clean
+Fail --> Clean
+Clean --> [*]
+
+note right of Child
+  Isolation: cloned file state,
+  child abort controller,
+  isolated mutable sets,
+  shared cache-safe params.
+end note
+
+note right of Synth
+  Research can be delegated.
+  Understanding cannot.
   The coordinator remains
   responsible for synthesis.
-  Research can be delegated;
-  understanding cannot.
 end note
-stop
 
 @enduml

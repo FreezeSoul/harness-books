@@ -52,13 +52,20 @@ jobs:
 
       - name: Build book1 website
         run: |
-          cd book1-claude-code
-          npx --yes honkit build . _book
+          python3 tools/book-kit/build_honkit.py book1-claude-code
+          python3 tools/book-kit/build_honkit.py book1-claude-code --locale en
 
       - name: Build book2 website
         run: |
-          cd book2-comparing
-          npx --yes honkit build . _book
+          python3 tools/book-kit/build_honkit.py book2-comparing
+          python3 tools/book-kit/build_honkit.py book2-comparing --locale en
+
+      - name: Build print HTML
+        run: |
+          python3 tools/book-kit/build_print_html.py book1-claude-code
+          python3 tools/book-kit/build_print_html.py book1-claude-code --locale en
+          python3 tools/book-kit/build_print_html.py book2-comparing
+          python3 tools/book-kit/build_print_html.py book2-comparing --locale en
 
       - name: Export PDFs
         env:
@@ -67,13 +74,26 @@ jobs:
           PDF_MONOFONT: Noto Sans Mono
         run: |
           python3 tools/book-kit/export_pdf.py book1-claude-code
+          python3 tools/book-kit/export_pdf.py book1-claude-code --locale en
           python3 tools/book-kit/export_pdf.py book2-comparing
+          python3 tools/book-kit/export_pdf.py book2-comparing --locale en
 
       - name: Assemble unified Pages site
         env:
           SITE_URL: https://harness-books.agentway.dev
           CUSTOM_DOMAIN: harness-books.agentway.dev
         run: python3 tools/book-kit/build_pages_site.py
+
+      - name: Verify published site payload
+        run: |
+          test -f dist/index.html
+          test -f dist/en/index.html
+          test -f dist/book1-claude-code/index.html
+          test -f dist/en/book1-claude-code/index.html
+          test -f dist/book2-comparing/index.html
+          test -f dist/en/book2-comparing/index.html
+          test -f dist/en/book1-claude-code/exported/book1-claude-code-en.pdf
+          test -f dist/en/book2-comparing/exported/book2-comparing-en.pdf
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

@@ -1,0 +1,70 @@
+@startuml
+title Three Context-Governance Paths - Budget, Fragments, Stacking
+
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam dpi 120
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+top to bottom direction
+
+state "<b>Claude Code - budgeted working memory</b>\nPrimary question: what must survive for the next action?" as CC {
+  state "Healthy" as CC_H #EFE6D8
+  state "Warning" as CC_W
+  state "Autocompact" as CC_A #F5EBDD
+  state "Compact rebuild\n-> fresh working floor" as CC_C #E8DDD0
+
+  CC_H -right-> CC_W : budget rising
+  CC_W -right-> CC_A : threshold
+  CC_A -right-> CC_C : reactive compact
+  CC_C -up-> CC_H : resume
+  CC_W -up-> CC_H : snip / microcompact
+}
+
+state "<b>Codex - structured context units</b>\nPrimary question: what kind of context is this unit?" as CX {
+  state "Fragment registry\nAGENTS / skills" as CX_Frag #E8DDD0
+  state "Typed policies +\ntool objects" as CX_Obj
+  state "Thread / rollout /\nstate substrate" as CX_Sub
+  state "Addressable context\nwho / when / why" as CX_Addr #EFE6D8
+
+  CX_Frag -right-> CX_Sub : mounted
+  CX_Obj -right-> CX_Sub : mounted
+  CX_Sub -right-> CX_Addr : every turn
+  CX_Addr -up-> CX_Frag : audit / re-edit
+}
+
+state "<b>OpenClaw - prompt stacking</b>\nPrimary question: what else can still be stuffed into the prompt?" as OC {
+  state "Bootstrap files\nAGENTS / SOUL / TOOLS /\nIDENTITY / USER / MEMORY" as OC_Boot #E8DDD0
+  state "Inject skill catalog\n+ workspace text" as OC_Skill
+  state "Large char budget" as OC_Big #F5EBDD
+  state "Truncate / recover\nafter overflow" as OC_Rec #F5EBDD
+
+  OC_Boot -right-> OC_Skill
+  OC_Skill -right-> OC_Big
+  OC_Big -right-> OC_Rec : overflow
+  OC_Rec -up-> OC_Boot : reset next turn
+}
+
+CC -[hidden]-> CX
+CX -[hidden]-> OC
+
+@enduml

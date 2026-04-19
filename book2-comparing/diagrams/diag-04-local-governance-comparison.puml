@@ -1,85 +1,77 @@
 @startuml
-title Claude Code vs Codex: 本地治理、技能与多代理
+title Local Governance Lifecycle - Session-Scoped vs Installed Institutions
 
 skinparam backgroundColor transparent
-skinparam dpi 135
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
+skinparam dpi 120
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam PackageFontSize 16
-skinparam RectangleFontSize 15
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
-skinparam ArrowColor #5E5A53
-skinparam PackageBorderColor #1D1D1D
-skinparam PackageFontColor #161616
-skinparam RectangleBorderColor #1D1D1D
-skinparam RectangleBackgroundColor #F2E9D9
-skinparam RectangleFontColor #161616
-skinparam NoteBackgroundColor #F5EBDD
-skinparam NoteBorderColor #8C2721
-skinparam NoteFontColor #7B1E1E
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam RectangleRoundCorner 10
-
-left to right direction
-
-package "Claude Code\n现场记忆式治理" #E8DDD0 {
-  rectangle "CLAUDE.md" as cc_claude
-  rectangle "SkillTool" as cc_skill
-  rectangle "forkedAgent" as cc_fork
-  rectangle "coordinator /\nverification" as cc_verify
-  rectangle "hooksConfigManager" as cc_hooks
-  rectangle "Session / Task Runtime" as cc_runtime
-
-  cc_claude --> cc_runtime
-  cc_skill --> cc_fork
-  cc_fork --> cc_runtime
-  cc_hooks --> cc_runtime
-  cc_verify --> cc_runtime
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
 }
 
-package "Codex\n制度挂载式治理" #EFE6D8 {
-  rectangle "AGENTS.md" as cx_agents
-  rectangle "System Skills\ninstalled to CODEX_HOME" as cx_skills
-  rectangle "Skills Fingerprint /\n.system marker" as cx_fingerprint
-  rectangle "Hook Events\nsession/pre/post/stop" as cx_hooks
-  rectangle "ThreadManager /\nAgentControl" as cx_agentsys
-  rectangle "Thread / Session Runtime" as cx_runtime
+top to bottom direction
 
-  cx_agents --> cx_runtime
-  cx_skills --> cx_runtime
-  cx_fingerprint --> cx_skills
-  cx_hooks --> cx_runtime
-  cx_agentsys --> cx_runtime
+state "<b>Claude Code - field-memory governance</b>" as CC {
+  state "Author in repo\nCLAUDE.md / skills /\nhooks / verify rules" as CC_Author #E8DDD0
+  state "Read on session start" as CC_Read
+  state "Active in live loop\nforkedAgent / hooks /\nverification subagents" as CC_Active #EFE6D8
+  state "Transcript / analytics" as CC_Audit
+  state "Edit back in repo" as CC_Edit
+
+  CC_Author -right-> CC_Read : session starts
+  CC_Read -right-> CC_Active : injected
+  CC_Active -down-> CC_Audit : evidence
+  CC_Audit -left-> CC_Edit : find gaps
+  CC_Edit -up-> CC_Author : close loop
 }
 
-cc_runtime -[hidden]down-> cx_runtime
+state "<b>Codex - institution-mounted governance</b>" as CX {
+  state "Install to CODEX_HOME\nAGENTS.md / skills /\nhooks events" as CX_Install #E8DDD0
+  state "Fingerprint /\n.system marker" as CX_FP
+  state "Mounted assets\nagentsys / threadmgr" as CX_Mount
+  state "Session / thread runtime" as CX_Runtime #EFE6D8
+  state "Thread records /\nhook events" as CX_Records
+  state "Version / re-install" as CX_Version
 
-rectangle "Team Governance" as team #F3ECDD
+  CX_Install -right-> CX_FP : stamped
+  CX_FP -right-> CX_Mount : loaded
+  CX_Mount -right-> CX_Runtime : active
+  CX_Runtime -down-> CX_Records : events
+  CX_Records -left-> CX_Version : drive next
+  CX_Version -up-> CX_Install : re-install
+}
 
-team --> cc_claude
-team --> cc_skill
-team --> cx_agents
-team --> cx_skills
+CC -[hidden]-> CX
 
-note bottom of cc_runtime
-治理方式:
-- 规则进入当前会话
-- skill 常与子代理协作
-- verify 作为独立纪律
-- hook 紧贴任务现场
+note bottom of CC
+  Governance unit = live session.
+  Rules become active immediately.
+  Fast feedback, weaker version
+  control across machines.
 end note
 
-note bottom of cx_runtime
-治理方式:
-- rules / skills 更像资产
-- hook 是显式生命周期事件
-- 代理协作通过工具与线程承接
-- 本地制度更易版本化
+note bottom of CX
+  Governance unit = installed
+  asset. Rules are stamped,
+  loaded, and emit typed events.
+  Auditable and versionable,
+  slower to change mid-session.
 end note
 
 @enduml

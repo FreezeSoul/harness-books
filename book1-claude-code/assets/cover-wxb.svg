@@ -41,10 +41,10 @@
   <text x="188" y="1324" fill="#161616" font-family="Georgia, 'Times New Roman', serif" font-size="128" font-weight="700">Engineering</text>
   <text x="188" y="1558" fill="#7b1e1e" font-family="Georgia, 'Times New Roman', serif" font-size="76">Claude Code 设计指南</text>
 
-  <text x="188" y="1938" fill="#f4ede0" font-family="Georgia, 'Times New Roman', serif" font-size="62">一个系统的体面，</text>
+  <text x="188" y="1938" fill="#f4ede0" font-family="Georgia, 'Times New Roman', serif" font-size="62">一个系统是否可靠，</text>
   <text x="188" y="2022" fill="#f4ede0" font-family="Georgia, 'Times New Roman', serif" font-size="62">不在它会不会说，</text>
   <text x="188" y="2106" fill="#f4ede0" font-family="Georgia, 'Times New Roman', serif" font-size="62">而在它出了岔子以后，</text>
-  <text x="188" y="2190" fill="#f4ede0" font-family="Georgia, 'Times New Roman', serif" font-size="62">谁来把残局接住。</text>
+  <text x="188" y="2190" fill="#f4ede0" font-family="Georgia, 'Times New Roman', serif" font-size="62">谁来收拾残局。</text>
 
   <line x1="188" y1="2298" x2="1412" y2="2298" stroke="#7b1e1e" stroke-width="3"/>
   <text x="188" y="2376" fill="#d7cdbd" font-family="Georgia, 'Times New Roman', serif" font-size="30" letter-spacing="2">CONTROL PLANE / QUERY LOOP / RECOVERY / VERIFICATION</text>

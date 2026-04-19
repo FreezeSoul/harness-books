@@ -1,0 +1,87 @@
+@startuml
+title Codex Thread - Turn Lifecycle And Record Fanout
+
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam dpi 130
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #0F172A
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #475569
+skinparam state {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  FontColor #0F172A
+  ArrowColor #475569
+  StartColor #C2410C
+  EndColor #0F172A
+}
+skinparam note {
+  BackgroundColor #FFF7ED
+  BorderColor #C2410C
+  FontColor #7C2D12
+}
+
+[*] --> Input
+
+state "Input\ntext + local images" as Input #EFF6FF
+state "Prepare\nnormalizeInput\ncreateOutputSchemaFile" as Prepare #DBEAFE
+
+state "Thread (id + options)" as Thread #E2E8F0 {
+  state "approvalPolicy" as TP1
+  state "sandboxMode" as TP2
+  state "workingDirectory" as TP3
+  state "network access" as TP4
+  state "additionalDirectories" as TP5
+}
+
+state "Run turn (_exec.run)" as Run #F8FAFC
+
+state "Events" as Events {
+  state "thread.started\n(assigns _id)" as Started
+  state "item.completed\n(collect outputs)" as Item
+  state "turn.completed\n(usage + summary)" as Turn
+}
+
+state "Persistent Continuity" as Persist #FFF7ED {
+  state "ThreadManager" as Manager
+  state "RolloutRecorder" as Rollout
+  state "state_db_bridge" as StateDb
+  state "message_history" as History
+}
+
+Input --> Prepare
+Prepare --> Thread : build / reuse
+Thread --> Run : turn begins
+Run --> Started
+Run --> Item
+Run --> Turn
+
+Started --> Manager
+Item --> Rollout
+Item --> History
+Turn --> StateDb
+Manager --> Rollout
+
+Run --> Thread : next turn\n(same id)
+Turn --> [*]
+
+note right of Thread
+  Turn-wide conditions travel
+  with the thread, not with
+  the prompt. A thread is
+  the addressable unit of
+  continuity.
+end note
+
+note right of Persist
+  Continuity becomes recorded
+  evidence: rollout for replay,
+  state for resume, history for
+  later memory synthesis.
+end note
+
+@enduml

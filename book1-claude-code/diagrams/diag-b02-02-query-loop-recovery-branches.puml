@@ -1,28 +1,23 @@
 @startuml
-title Query Loop 恢复分支
+title Query Loop Recovery Branches - Controlled Side Paths
 
 skinparam backgroundColor #F7F1E6
-skinparam linetype ortho
-skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam dpi 135
-skinparam ranksep 34
-skinparam nodesep 24
+skinparam dpi 130
 skinparam defaultFontName Georgia
-skinparam defaultFontSize 15
-skinparam TitleFontSize 20
-skinparam NoteFontSize 14
-skinparam ArrowFontSize 13
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
 skinparam TitleFontColor #161616
-skinparam activity {
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
   BackgroundColor #F2E9D9
   BorderColor #1D1D1D
   FontColor #161616
   ArrowColor #5E5A53
   StartColor #8C2721
   EndColor #161616
-  DiamondBackgroundColor #F5EBDD
-  DiamondBorderColor #8C2721
 }
 skinparam note {
   BackgroundColor #F5EBDD
@@ -30,47 +25,50 @@ skinparam note {
   FontColor #7B1E1E
 }
 
-start
+[*] --> Trigger
 
-:Recovery trigger observed;
+state "Recovery trigger" as Trigger #F5EBDD
+state "PTL: collapse drain" as Drain
+state "PTL: reactive compact" as Compact
+state "MOT: raise cap" as RaiseCap
+state "MOT: inject resume" as Resume
+state "Interrupt: yield pending" as Yield
+state "API/hook: classify\n+ retry policy" as Classify
+state "Post-compact messages" as Post #EFE6D8
+state "Re-enter Prepare" as Reenter #EFE6D8
+state "Surface error" as Surface #F5EBDD
+state "Interruption end" as End #F5EBDD
 
-if (prompt too long?) then (PTL)
-  :Try collapse drain first;
-  if (works?) then (yes)
-    :Re-enter Turn Start;
-  else (no)
-    :Attempt reactive compact once;
-    if (works?) then (yes)
-      :Build post-compact messages;
-      :Re-enter Turn Start;
-    else (no)
-      :Surface PTL error;
-      stop
-    endif
-  endif
-elseif (max_output_tokens?) then (truncate)
-  :Raise output cap if cheap;
-  if (cap raised?) then (yes)
-    :Resume model call;
-  else (no)
-    :Inject resume meta message;
-    :Re-enter Turn Start;
-  endif
-elseif (user interrupted?) then (interrupt)
-  :Yield remaining tool results;
-  :Emit interruption message;
-  stop
-else (other)
-  :Classify API / tool / hook failure;
-  :Surface or retry by policy;
-endif
+Trigger --> Drain : prompt too long
+Drain --> Reenter : resolved
+Drain --> Compact : still over budget
+Compact --> Post : summary fits
+Compact --> Surface : compact fails
+Post --> Reenter
 
-stop
+Trigger --> RaiseCap : max_output_tokens
+RaiseCap --> Resume : cap not cheap
+RaiseCap --> Reenter : cap raised
+Resume --> Reenter
 
-note right
-恢复不是外挂流程，
-而是主循环内部的
-受控旁路。
+Trigger --> Yield : user interrupt
+Yield --> End
+
+Trigger --> Classify : api / tool / hook failure
+Classify --> Reenter : retryable
+Classify --> Surface : not retryable
+
+Reenter --> [*]
+Surface --> [*]
+End --> [*]
+
+note right of Reenter
+  Every recoverable branch
+  ends the same way: back
+  into Prepare or a
+  deterministic exit.
+  Recovery is a first-class
+  path, not a patch.
 end note
 
 @enduml
